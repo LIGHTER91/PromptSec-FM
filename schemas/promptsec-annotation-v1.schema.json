@@ -1,0 +1,351 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/LIGHTER91/PromptSec-FM/schemas/promptsec-annotation-v1.schema.json",
+  "title": "PromptSec-FM Annotation v1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "taxonomy_version",
+    "context",
+    "content",
+    "annotations",
+    "derived"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "taxonomy_version": {
+      "const": "1.0"
+    },
+    "context": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "protected_policy",
+        "user_goal",
+        "available_capabilities"
+      ],
+      "properties": {
+        "protected_policy": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "user_goal": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "available_capabilities": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "content": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "text",
+        "language",
+        "delivery_mode",
+        "source_role",
+        "content_origin",
+        "ingestion_path",
+        "modality",
+        "source_integrity"
+      ],
+      "properties": {
+        "text": {
+          "type": "string"
+        },
+        "language": {
+          "type": "string",
+          "minLength": 2
+        },
+        "delivery_mode": {
+          "enum": [
+            "DIRECT",
+            "INDIRECT",
+            "HYBRID",
+            "UNKNOWN",
+            "NOT_APPLICABLE"
+          ]
+        },
+        "source_role": {
+          "enum": [
+            "SYSTEM",
+            "DEVELOPER",
+            "USER",
+            "ASSISTANT",
+            "TOOL",
+            "EXTERNAL_CONTENT",
+            "MEMORY",
+            "UNKNOWN"
+          ]
+        },
+        "content_origin": {
+          "enum": [
+            "CHAT_MESSAGE",
+            "DOCUMENT",
+            "WEBPAGE",
+            "EMAIL",
+            "TOOL_OUTPUT",
+            "API_RESPONSE",
+            "DATABASE_RECORD",
+            "CODE_REPOSITORY",
+            "MEMORY_ITEM",
+            "INTER_AGENT_MESSAGE",
+            "MEDIA_CONTENT",
+            "OTHER",
+            "UNKNOWN"
+          ]
+        },
+        "ingestion_path": {
+          "enum": [
+            "CHAT_INPUT",
+            "FILE_UPLOAD",
+            "RETRIEVAL",
+            "WEB_BROWSING",
+            "TOOL_CALL",
+            "MEMORY_RECALL",
+            "AGENT_MESSAGE",
+            "OTHER",
+            "UNKNOWN"
+          ]
+        },
+        "modality": {
+          "enum": [
+            "TEXT",
+            "IMAGE",
+            "AUDIO",
+            "VIDEO",
+            "CODE",
+            "STRUCTURED_DATA",
+            "MULTIMODAL"
+          ]
+        },
+        "source_integrity": {
+          "enum": [
+            "VERIFIED",
+            "UNVERIFIED",
+            "KNOWN_COMPROMISED",
+            "UNKNOWN"
+          ]
+        }
+      }
+    },
+    "annotations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "instruction_presence",
+        "instruction_presentation",
+        "instruction_addressee",
+        "user_goal_alignment",
+        "protected_policy_alignment",
+        "authority_status",
+        "attack_families",
+        "attack_objectives",
+        "spans",
+        "annotation_status",
+        "annotator_confidence"
+      ],
+      "properties": {
+        "instruction_presence": {
+          "enum": [
+            "NO_INSTRUCTION",
+            "INSTRUCTION_PRESENT",
+            "UNDETERMINED"
+          ]
+        },
+        "instruction_presentation": {
+          "enum": [
+            "OPERATIVE",
+            "QUOTED_OR_REPORTED",
+            "HYPOTHETICAL",
+            "UNKNOWN",
+            "NOT_APPLICABLE"
+          ]
+        },
+        "instruction_addressee": {
+          "enum": [
+            "MODEL_OR_AGENT",
+            "HUMAN",
+            "EXTERNAL_SYSTEM",
+            "UNKNOWN",
+            "NOT_APPLICABLE"
+          ]
+        },
+        "user_goal_alignment": {
+          "enum": [
+            "ALIGNED",
+            "MISALIGNED",
+            "UNDETERMINED",
+            "NOT_APPLICABLE"
+          ]
+        },
+        "protected_policy_alignment": {
+          "enum": [
+            "COMPLIANT",
+            "CONFLICTING",
+            "UNDETERMINED",
+            "NOT_APPLICABLE"
+          ]
+        },
+        "authority_status": {
+          "enum": [
+            "WITHIN_AUTHORITY",
+            "OUTSIDE_AUTHORITY",
+            "SPOOFED",
+            "UNKNOWN",
+            "NOT_APPLICABLE"
+          ]
+        },
+        "attack_families": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "PROMPT_INJECTION",
+              "JAILBREAK",
+              "OTHER_PROMPT_ATTACK"
+            ]
+          },
+          "uniqueItems": true
+        },
+        "attack_objectives": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "TASK_HIJACKING",
+              "POLICY_BYPASS",
+              "PROMPT_OR_POLICY_DISCLOSURE",
+              "SENSITIVE_DATA_EXFILTRATION",
+              "UNAUTHORIZED_ACTION",
+              "OUTPUT_OR_DECISION_MANIPULATION",
+              "STATE_OR_MEMORY_MANIPULATION",
+              "AVAILABILITY_DISRUPTION",
+              "SYSTEM_COMPROMISE_OR_MALWARE",
+              "FRAUD_OR_IMPERSONATION",
+              "OTHER"
+            ]
+          },
+          "uniqueItems": true
+        },
+        "spans": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "start",
+              "end",
+              "type"
+            ],
+            "properties": {
+              "start": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "end": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "type": {
+                "enum": [
+                  "DIRECTIVE",
+                  "INJECTION_PAYLOAD",
+                  "AUTHORITY_CLAIM"
+                ]
+              }
+            }
+          }
+        },
+        "annotation_status": {
+          "enum": [
+            "CONFIRMED",
+            "INSUFFICIENT_CONTEXT",
+            "DISAGREEMENT",
+            "EXCLUDED"
+          ]
+        },
+        "annotator_confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "instruction_presence": {
+                "const": "NO_INSTRUCTION"
+              }
+            },
+            "required": [
+              "instruction_presence"
+            ]
+          },
+          "then": {
+            "properties": {
+              "instruction_presentation": {
+                "const": "NOT_APPLICABLE"
+              },
+              "instruction_addressee": {
+                "const": "NOT_APPLICABLE"
+              },
+              "user_goal_alignment": {
+                "const": "NOT_APPLICABLE"
+              },
+              "protected_policy_alignment": {
+                "const": "NOT_APPLICABLE"
+              },
+              "authority_status": {
+                "const": "NOT_APPLICABLE"
+              },
+              "attack_families": {
+                "maxItems": 0
+              },
+              "attack_objectives": {
+                "maxItems": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    "derived": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "prompt_injection_verdict"
+      ],
+      "properties": {
+        "prompt_injection_verdict": {
+          "enum": [
+            "NOT_DETECTED",
+            "UNCERTAIN",
+            "DETECTED"
+          ]
+        }
+      }
+    },
+    "extensions": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+}
