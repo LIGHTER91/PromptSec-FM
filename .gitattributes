@@ -1,0 +1,5 @@
+# Reproducible hashes require byte-stable text files on every operating system.
+* text=auto eol=lf
+
+*.pdf binary
+*.xlsx binary

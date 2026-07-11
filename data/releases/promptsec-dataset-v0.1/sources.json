@@ -1,0 +1,154 @@
+{
+  "release_config": "configs/dataset_v0.1.yaml",
+  "release_config_sha256": "6efb590ee6e05d9cd2a8f38ac6e0a49cce81aacee404232c4e718a3755c6441f",
+  "release_id": "promptsec-dataset-v0.1",
+  "schema_version": "0.1",
+  "sources": [
+    {
+      "artifacts": [
+        {
+          "expected_sha256": "63f95d3e67eac4178cdabdbdaf192cd05f2b6ed0702b578f1d30d556e5155670",
+          "format": "json",
+          "id": "text_attack_train",
+          "local_path": "data/raw/bipia/a004b69ec0dd446e0afd461d98cb5e96e120a5d0/text_attack_train.json",
+          "observed_sha256": "63f95d3e67eac4178cdabdbdaf192cd05f2b6ed0702b578f1d30d556e5155670",
+          "records_path": null,
+          "split": "train",
+          "url": "https://raw.githubusercontent.com/microsoft/BIPIA/a004b69ec0dd446e0afd461d98cb5e96e120a5d0/benchmark/text_attack_train.json"
+        },
+        {
+          "expected_sha256": "75750e7b4e8b34e8f9d88d89b357aeaaf02bd07f9e493ccd37eda74a0cd7c7f8",
+          "format": "json",
+          "id": "text_attack_test",
+          "local_path": "data/raw/bipia/a004b69ec0dd446e0afd461d98cb5e96e120a5d0/text_attack_test.json",
+          "observed_sha256": "75750e7b4e8b34e8f9d88d89b357aeaaf02bd07f9e493ccd37eda74a0cd7c7f8",
+          "records_path": null,
+          "split": "test",
+          "url": "https://raw.githubusercontent.com/microsoft/BIPIA/a004b69ec0dd446e0afd461d98cb5e96e120a5d0/benchmark/text_attack_test.json"
+        },
+        {
+          "expected_sha256": "fe515080b6da2b5c0b67ca7ba2a3b3c2ce57c48f45733c475ebc813cba118484",
+          "format": "json",
+          "id": "code_attack_train",
+          "local_path": "data/raw/bipia/a004b69ec0dd446e0afd461d98cb5e96e120a5d0/code_attack_train.json",
+          "observed_sha256": "fe515080b6da2b5c0b67ca7ba2a3b3c2ce57c48f45733c475ebc813cba118484",
+          "records_path": null,
+          "split": "train",
+          "url": "https://raw.githubusercontent.com/microsoft/BIPIA/a004b69ec0dd446e0afd461d98cb5e96e120a5d0/benchmark/code_attack_train.json"
+        },
+        {
+          "expected_sha256": "892545c5aaec0645b1ded65dc7816b3d70e9ef4eadcba2301a7a3db93676b6e0",
+          "format": "json",
+          "id": "code_attack_test",
+          "local_path": "data/raw/bipia/a004b69ec0dd446e0afd461d98cb5e96e120a5d0/code_attack_test.json",
+          "observed_sha256": "892545c5aaec0645b1ded65dc7816b3d70e9ef4eadcba2301a7a3db93676b6e0",
+          "records_path": null,
+          "split": "test",
+          "url": "https://raw.githubusercontent.com/microsoft/BIPIA/a004b69ec0dd446e0afd461d98cb5e96e120a5d0/benchmark/code_attack_test.json"
+        }
+      ],
+      "config": "configs/sources/bipia.toml",
+      "config_sha256": "a02c638b53035a92c8d945150fd7b35c33e79802a321137e1c0339c28774cfe7",
+      "homepage": "https://github.com/microsoft/BIPIA",
+      "id": "bipia",
+      "license_manifest": "manifests/sources/bipia.json",
+      "name": "BIPIA",
+      "records": 250,
+      "repository": "https://github.com/microsoft/BIPIA.git",
+      "revision": "a004b69ec0dd446e0afd461d98cb5e96e120a5d0",
+      "version": "paper-benchmark"
+    },
+    {
+      "artifacts": [
+        {
+          "expected_sha256": "69b535596d95102424e9c5946944feb4f2d596687eb8213f2ecad75478e5ffdd",
+          "format": "json",
+          "id": "notinject_one",
+          "local_path": "data/raw/notinject/1b5751e88bf7475acbedfc8eda795ce060307c84/NotInject_one.json",
+          "observed_sha256": "69b535596d95102424e9c5946944feb4f2d596687eb8213f2ecad75478e5ffdd",
+          "records_path": null,
+          "split": "NotInject_one",
+          "url": "https://raw.githubusercontent.com/leolee99/PIGuard/1b5751e88bf7475acbedfc8eda795ce060307c84/datasets/NotInject_one.json"
+        },
+        {
+          "expected_sha256": "6043d94e75b48d8e7682d25dc79eaf45359e1e561ce520e3b8fd5625a91060c6",
+          "format": "json",
+          "id": "notinject_two",
+          "local_path": "data/raw/notinject/1b5751e88bf7475acbedfc8eda795ce060307c84/NotInject_two.json",
+          "observed_sha256": "6043d94e75b48d8e7682d25dc79eaf45359e1e561ce520e3b8fd5625a91060c6",
+          "records_path": null,
+          "split": "NotInject_two",
+          "url": "https://raw.githubusercontent.com/leolee99/PIGuard/1b5751e88bf7475acbedfc8eda795ce060307c84/datasets/NotInject_two.json"
+        },
+        {
+          "expected_sha256": "ef01eff0d761d2e34571b3fdbcec08c30cd93efe8d0e1a2eb5c2baeb1873b070",
+          "format": "json",
+          "id": "notinject_three",
+          "local_path": "data/raw/notinject/1b5751e88bf7475acbedfc8eda795ce060307c84/NotInject_three.json",
+          "observed_sha256": "ef01eff0d761d2e34571b3fdbcec08c30cd93efe8d0e1a2eb5c2baeb1873b070",
+          "records_path": null,
+          "split": "NotInject_three",
+          "url": "https://raw.githubusercontent.com/leolee99/PIGuard/1b5751e88bf7475acbedfc8eda795ce060307c84/datasets/NotInject_three.json"
+        }
+      ],
+      "config": "configs/sources/notinject.toml",
+      "config_sha256": "01b2538b3e1fee1be89808c321195c065e06be83273891dc976a4137e3d68dc3",
+      "homepage": "https://huggingface.co/datasets/leolee99/NotInject",
+      "id": "notinject",
+      "license_manifest": "manifests/sources/notinject.json",
+      "name": "NotInject",
+      "records": 339,
+      "repository": "https://github.com/leolee99/PIGuard.git",
+      "revision": "1b5751e88bf7475acbedfc8eda795ce060307c84",
+      "version": "hf:847ae76cf8fea5ed325429e569ae8cfef022d2e0"
+    },
+    {
+      "artifacts": [
+        {
+          "expected_sha256": "c7b11e843136a40fec74a9dfd5f694031254e66131b216a2de591501ba96d50b",
+          "format": "zip",
+          "id": "source_archive",
+          "local_path": "data/raw/open_prompt_injection/95290f7ce3794c4c52ad3fe8113db2bfcdfe89e0/95290f7ce3794c4c52ad3fe8113db2bfcdfe89e0.zip",
+          "observed_sha256": "c7b11e843136a40fec74a9dfd5f694031254e66131b216a2de591501ba96d50b",
+          "records_path": null,
+          "split": "benchmark_definitions",
+          "url": "https://github.com/liu00222/Open-Prompt-Injection/archive/95290f7ce3794c4c52ad3fe8113db2bfcdfe89e0.zip"
+        }
+      ],
+      "config": "configs/sources/open_prompt_injection.toml",
+      "config_sha256": "07705f878d47764f3b41f3227b6ede82516a425d33d7a4e412f93d1a72c38ff6",
+      "homepage": "https://github.com/liu00222/Open-Prompt-Injection",
+      "id": "open_prompt_injection",
+      "license_manifest": "manifests/sources/open_prompt_injection.json",
+      "name": "Open-Prompt-Injection",
+      "records": 28,
+      "repository": "https://github.com/liu00222/Open-Prompt-Injection.git",
+      "revision": "95290f7ce3794c4c52ad3fe8113db2bfcdfe89e0",
+      "version": "paper-benchmark"
+    },
+    {
+      "artifacts": [
+        {
+          "expected_sha256": "d26af509698c5f88e611a163cc162ab903d41040cc6307db9f6ee4b6195a5b6e",
+          "format": "python",
+          "id": "prompt_data",
+          "local_path": "data/raw/promptinject/2928a719d5de62d3766226f1b44c51d9570bc530/prompt_data.py",
+          "observed_sha256": "d26af509698c5f88e611a163cc162ab903d41040cc6307db9f6ee4b6195a5b6e",
+          "records_path": null,
+          "split": "unsplit",
+          "url": "https://raw.githubusercontent.com/agencyenterprise/PromptInject/2928a719d5de62d3766226f1b44c51d9570bc530/promptinject/prompt_data.py"
+        }
+      ],
+      "config": "configs/sources/promptinject.toml",
+      "config_sha256": "a8fb4e360ec7c46169f0946db6425e45771958b6e5b70bc30ad55b65ea9a6f22",
+      "homepage": "https://github.com/agencyenterprise/PromptInject",
+      "id": "promptinject",
+      "license_manifest": "manifests/sources/promptinject.json",
+      "name": "PromptInject",
+      "records": 10,
+      "repository": "https://github.com/agencyenterprise/PromptInject.git",
+      "revision": "2928a719d5de62d3766226f1b44c51d9570bc530",
+      "version": "2022-paper-artifacts"
+    }
+  ]
+}

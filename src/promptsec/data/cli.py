@@ -12,6 +12,7 @@ from promptsec.data.config import SourceConfig
 from promptsec.data.fetch import fetch_artifacts
 from promptsec.data.importers.base import load_importer
 from promptsec.data.pipeline import build_dataset
+from promptsec.data.release import build_release
 from promptsec.data.validation import require_valid_record
 
 
@@ -55,7 +56,9 @@ def make_parser() -> argparse.ArgumentParser:
     fetch.add_argument("--destination", default=Path("data/raw"), type=Path)
     fetch.add_argument("--overwrite", action="store_true")
 
-    build = subparsers.add_parser("build", help="import and validate one configured source")
+    build = subparsers.add_parser(
+        "build", help="build one source or a complete audited YAML release"
+    )
     build.add_argument("--config", required=True, type=Path)
     build.add_argument("--input", action="append", default=[], metavar="ARTIFACT_ID=PATH")
     build.add_argument("--output", required=True, type=Path)
@@ -76,6 +79,16 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "build":
+        if args.config.suffix.lower() in {".yaml", ".yml"}:
+            if args.input or args.report or args.imported_at:
+                raise ValueError(
+                    "release YAML builds do not accept --input, --report, or --imported-at; "
+                    "these values are pinned by the release configuration"
+                )
+            report = build_release(args.config, output_override=args.output)
+            print(json.dumps(report.to_dict(), ensure_ascii=False, indent=2, sort_keys=True))
+            return 0
+
         config = SourceConfig.load(args.config)
         importer = load_importer(config.importer, config, imported_at=args.imported_at)
         report = build_dataset(

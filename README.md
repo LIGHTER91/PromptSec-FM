@@ -71,9 +71,32 @@ python scripts/validate_dataset.py data/processed/v0.1/promptinject.jsonl
 ```
 
 `--imported-at` makes build metadata reproducible across runs. Raw artifacts and
-generated records stay ignored by Git. Their expected SHA-256 values, upstream
+intermediate records stay ignored by Git. Their expected SHA-256 values, upstream
 revisions, and component-level license notes are tracked in `configs/` and
 `manifests/`.
+
+## Audited experimental release
+
+Phase 3.2 audits mappings, computes exact and lexical-semantic duplicate groups,
+assigns provenance-backed template families, and creates leakage-checked
+experimental splits. It does not train a model. Build the complete release with one
+command:
+
+```bash
+python scripts/build_dataset.py \
+  --config configs/dataset_v0.1.yaml \
+  --output data/releases/promptsec-dataset-v0.1
+```
+
+The command fetches missing pinned artifacts, validates all canonical records, and
+writes the five split files, review queue, dataset card, source and license
+inventories, statistics, deduplication and split reports, and SHA-256 checksums.
+The same configuration and source artifacts produce byte-identical release files.
+The family mapping rules are documented in `docs/family_mapping_v0.1.md`.
+
+The generated v0.1 artifact is local and experimental. Its publication status is
+`BLOCKED_PENDING_LICENSE_REVIEW` because redistribution permission for BIPIA's
+attack-template JSON is unresolved; consult `licenses.json` before any publication.
 
 ## Mapping contract
 
@@ -92,12 +115,12 @@ revisions, and component-level license notes are tracked in `configs/` and
 ## Repository layout
 
 ```text
-configs/              Source configuration
-data/                 Local downloaded and generated data (not committed)
+configs/              Source and release configuration
+data/                 Local raw data and the tracked v0.1 release
 docs/                 Normative and scientific documentation
 examples/             Canonical examples
 manifests/            Source and license manifests
-reports/              Generated validation reports (not committed)
+reports/              Tracked v0.1 audit reports and ignored local reports
 schemas/              JSON Schemas
 scripts/              Command-line entry points
 src/promptsec/data/   Dataset pipeline and importers

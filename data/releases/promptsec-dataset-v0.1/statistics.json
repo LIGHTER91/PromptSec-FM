@@ -1,0 +1,323 @@
+{
+  "content_length": {
+    "characters": {
+      "count": 627,
+      "max": 593,
+      "mean": 116.810207,
+      "median": 89.0,
+      "min": 11,
+      "p95": 320
+    },
+    "utf8_bytes": {
+      "count": 627,
+      "max": 593,
+      "mean": 123.427432,
+      "median": 93.0,
+      "min": 17,
+      "p95": 320
+    }
+  },
+  "distributions": {
+    "annotation_tier": {
+      "DETERMINISTIC_MAPPING": 10,
+      "HEURISTIC_MAPPING": 278,
+      "UNANNOTATED": 339
+    },
+    "attack_family": {
+      "NONE": 339,
+      "PROMPT_INJECTION": 288
+    },
+    "attack_objective": {
+      "NONE": 339,
+      "PROMPT_OR_POLICY_DISCLOSURE": 5,
+      "TASK_HIJACKING": 283
+    },
+    "delivery_mode": {
+      "DIRECT": 349,
+      "INDIRECT": 278
+    },
+    "domain": {
+      "Alphanumeric Substitution": 5,
+      "Anagramming": 5,
+      "Base Encoding": 5,
+      "Blocking Internet Connection": 5,
+      "Bringing Down Hosts and Servers (Denial of Service)": 5,
+      "Business Intelligence": 5,
+      "Clickbait": 5,
+      "Common Queries": 126,
+      "Compromising Computers": 5,
+      "Content Creation": 5,
+      "Conversational Agent": 5,
+      "Cookie Theft": 5,
+      "Corrupting an Operating System": 5,
+      "Crippling Critical Infrastructures": 5,
+      "Cryptocurrency Mining": 5,
+      "Data Eavesdropping": 5,
+      "Device and Driver Enumeration": 5,
+      "Dumpster Diving": 5,
+      "Emoji Substitution": 5,
+      "Encrypting Documents and Demanding Ransom (Ransomware)": 5,
+      "Entertainment": 5,
+      "Environment Variable Analysis": 5,
+      "Exploiting System Vulnerabilities": 5,
+      "Homophonic Substitution": 5,
+      "Information Dissemination": 5,
+      "Information Retrieval": 5,
+      "Instruction": 5,
+      "Introduce System Fingerprinting": 5,
+      "Keylogging": 5,
+      "Language Translation": 10,
+      "Learning and Tutoring": 5,
+      "Malware Distribution": 5,
+      "Marketing & Advertising": 5,
+      "Memory Scanning": 5,
+      "Misinformation & Propaganda": 5,
+      "Misspelling Intentionally": 5,
+      "Multilingual": 84,
+      "Network Propagation": 5,
+      "Persuasion": 5,
+      "Programming Help": 5,
+      "Research Assistance": 5,
+      "Reverse Text": 5,
+      "Scams & Fraud": 5,
+      "Screen Scraping": 5,
+      "Sending Out Spam Emails": 5,
+      "Sentiment Analysis": 5,
+      "Social Interaction": 5,
+      "Space Removal & Grouping": 5,
+      "Substitution Ciphers": 5,
+      "Task Automation": 5,
+      "Technique Queries": 87,
+      "Traffic Analysis": 5,
+      "Virtual Creation": 42,
+      "duplicate_sentence_detection": 4,
+      "goal_hikacking_attacks": 5,
+      "grammar_correction": 4,
+      "hate_detection": 4,
+      "natural_language_inference": 4,
+      "prompt_leaking_attacks": 5,
+      "sentiment_analysis": 4,
+      "spam_detection": 4,
+      "summarization": 4
+    },
+    "language": {
+      "en": 543,
+      "und": 84
+    },
+    "source": {
+      "bipia": 250,
+      "notinject": 339,
+      "open_prompt_injection": 28,
+      "promptinject": 10
+    }
+  },
+  "mapping_quality": {
+    "deterministic_mapping": {
+      "count": 10,
+      "rate": 0.015949
+    },
+    "heuristic_mapping": {
+      "count": 278,
+      "rate": 0.443381
+    },
+    "mapping_confidence": {
+      "count": 627,
+      "max": 1.0,
+      "mean": 0.330781,
+      "median": 0.0,
+      "min": 0.0,
+      "p95": 0.8
+    },
+    "missing_mapping_confidence": {
+      "count": 0,
+      "rate": 0.0
+    },
+    "requires_manual_review": {
+      "count": 617,
+      "rate": 0.984051
+    },
+    "review_candidates": {
+      "count": 627,
+      "rate": 1.0
+    },
+    "review_queue": {
+      "count": 627,
+      "rate": 1.0,
+      "threshold": 0.85
+    },
+    "tiers": {
+      "DETERMINISTIC_MAPPING": {
+        "count": 10,
+        "rate": 0.015949
+      },
+      "GOLD_SOURCE": {
+        "count": 0,
+        "rate": 0.0
+      },
+      "HEURISTIC_MAPPING": {
+        "count": 278,
+        "rate": 0.443381
+      },
+      "UNANNOTATED": {
+        "count": 339,
+        "rate": 0.54067
+      }
+    }
+  },
+  "release": {
+    "dropped_exact_duplicates": 2,
+    "id": "promptsec-dataset-v0.1",
+    "imported_records": 627,
+    "records_by_split": {
+      "test_held_out_family": 4,
+      "test_held_out_source": 28,
+      "test_id": 271,
+      "train": 237,
+      "validation": 85
+    },
+    "released_records": 625,
+    "review_queue_records": 627,
+    "semantic_clusters": 399,
+    "taxonomy_version": "1.0"
+  },
+  "spans": {
+    "by_type": {
+      "INJECTION_PAYLOAD": 288
+    },
+    "count_per_record": {
+      "count": 627,
+      "max": 1,
+      "mean": 0.45933,
+      "median": 0.0,
+      "min": 0,
+      "p95": 1
+    },
+    "length_characters": {
+      "count": 288,
+      "max": 593,
+      "mean": 151.496528,
+      "median": 85.5,
+      "min": 17,
+      "p95": 387
+    },
+    "records_with_spans": {
+      "count": 288,
+      "rate": 0.45933
+    },
+    "total": 288
+  },
+  "statistics_schema_version": "0.1",
+  "total_records": 627,
+  "unknown_or_undetermined": {
+    "annotations.authority_status": {
+      "UNDETERMINED": 0,
+      "UNDETERMINED_rate": 0.0,
+      "UNKNOWN": 339,
+      "UNKNOWN_rate": 0.54067,
+      "combined": {
+        "count": 339,
+        "rate": 0.54067
+      }
+    },
+    "annotations.instruction_addressee": {
+      "UNDETERMINED": 0,
+      "UNDETERMINED_rate": 0.0,
+      "UNKNOWN": 339,
+      "UNKNOWN_rate": 0.54067,
+      "combined": {
+        "count": 339,
+        "rate": 0.54067
+      }
+    },
+    "annotations.instruction_presence": {
+      "UNDETERMINED": 339,
+      "UNDETERMINED_rate": 0.54067,
+      "UNKNOWN": 0,
+      "UNKNOWN_rate": 0.0,
+      "combined": {
+        "count": 339,
+        "rate": 0.54067
+      }
+    },
+    "annotations.instruction_presentation": {
+      "UNDETERMINED": 0,
+      "UNDETERMINED_rate": 0.0,
+      "UNKNOWN": 339,
+      "UNKNOWN_rate": 0.54067,
+      "combined": {
+        "count": 339,
+        "rate": 0.54067
+      }
+    },
+    "annotations.protected_policy_alignment": {
+      "UNDETERMINED": 627,
+      "UNDETERMINED_rate": 1.0,
+      "UNKNOWN": 0,
+      "UNKNOWN_rate": 0.0,
+      "combined": {
+        "count": 627,
+        "rate": 1.0
+      }
+    },
+    "annotations.user_goal_alignment": {
+      "UNDETERMINED": 339,
+      "UNDETERMINED_rate": 0.54067,
+      "UNKNOWN": 0,
+      "UNKNOWN_rate": 0.0,
+      "combined": {
+        "count": 339,
+        "rate": 0.54067
+      }
+    },
+    "content.content_origin": {
+      "UNDETERMINED": 0,
+      "UNDETERMINED_rate": 0.0,
+      "UNKNOWN": 178,
+      "UNKNOWN_rate": 0.283892,
+      "combined": {
+        "count": 178,
+        "rate": 0.283892
+      }
+    },
+    "content.delivery_mode": {
+      "UNDETERMINED": 0,
+      "UNDETERMINED_rate": 0.0,
+      "UNKNOWN": 0,
+      "UNKNOWN_rate": 0.0,
+      "combined": {
+        "count": 0,
+        "rate": 0.0
+      }
+    },
+    "content.ingestion_path": {
+      "UNDETERMINED": 0,
+      "UNDETERMINED_rate": 0.0,
+      "UNKNOWN": 0,
+      "UNKNOWN_rate": 0.0,
+      "combined": {
+        "count": 0,
+        "rate": 0.0
+      }
+    },
+    "content.source_integrity": {
+      "UNDETERMINED": 0,
+      "UNDETERMINED_rate": 0.0,
+      "UNKNOWN": 627,
+      "UNKNOWN_rate": 1.0,
+      "combined": {
+        "count": 627,
+        "rate": 1.0
+      }
+    },
+    "content.source_role": {
+      "UNDETERMINED": 0,
+      "UNDETERMINED_rate": 0.0,
+      "UNKNOWN": 0,
+      "UNKNOWN_rate": 0.0,
+      "combined": {
+        "count": 0,
+        "rate": 0.0
+      }
+    }
+  }
+}

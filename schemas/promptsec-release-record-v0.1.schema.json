@@ -1,0 +1,300 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/LIGHTER91/PromptSec-FM/schemas/promptsec-release-record-v0.1.schema.json",
+  "title": "PromptSec-FM Release Record v0.1",
+  "description": "Audited Phase 3.2 profile requiring mapping quality, grouping, hashes, deduplication, and split assignment.",
+  "allOf": [
+    {
+      "$ref": "https://github.com/LIGHTER91/PromptSec-FM/schemas/promptsec-dataset-record-v0.1.schema.json"
+    },
+    {
+      "type": "object",
+      "required": [
+        "extensions"
+      ],
+      "properties": {
+        "extensions": {
+          "type": "object",
+          "required": [
+            "quality_v0_1"
+          ],
+          "properties": {
+            "quality_v0_1": {
+              "$ref": "#/$defs/quality"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "mappingQuality": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "annotation_tier",
+        "mapping_confidence",
+        "requires_manual_review",
+        "review_reasons"
+      ],
+      "properties": {
+        "annotation_tier": {
+          "enum": [
+            "GOLD_SOURCE",
+            "DETERMINISTIC_MAPPING",
+            "HEURISTIC_MAPPING",
+            "UNANNOTATED"
+          ]
+        },
+        "mapping_confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "requires_manual_review": {
+          "type": "boolean"
+        },
+        "review_reasons": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "grouping": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "domain",
+        "template_family",
+        "assignment_method",
+        "assignment_rule",
+        "requires_manual_review"
+      ],
+      "properties": {
+        "domain": {
+          "type": "string",
+          "minLength": 1
+        },
+        "template_family": {
+          "type": "string",
+          "minLength": 1
+        },
+        "assignment_method": {
+          "enum": [
+            "DOCUMENTED_RULE",
+            "GENERATION_TEMPLATE",
+            "SOURCE_METADATA",
+            "MANUAL_REVIEW"
+          ]
+        },
+        "assignment_rule": {
+          "type": "string",
+          "minLength": 1
+        },
+        "requires_manual_review": {
+          "type": "boolean"
+        }
+      }
+    },
+    "hashes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "raw_hash",
+        "normalized_hash",
+        "contextual_hash"
+      ],
+      "properties": {
+        "raw_hash": {
+          "$ref": "#/$defs/sha256"
+        },
+        "normalized_hash": {
+          "$ref": "#/$defs/sha256"
+        },
+        "contextual_hash": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "deduplication": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "exact_group_id",
+        "representative_id",
+        "semantic_cluster_id",
+        "similarity_to_representative",
+        "semantic_assignment_method",
+        "semantic_group_key",
+        "dedup_decision"
+      ],
+      "properties": {
+        "exact_group_id": {
+          "type": "string",
+          "pattern": "^exact_[0-9a-f]{64}$"
+        },
+        "representative_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "semantic_cluster_id": {
+          "type": "string",
+          "pattern": "^semantic_[0-9a-f]{24}$"
+        },
+        "similarity_to_representative": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "semantic_assignment_method": {
+          "enum": [
+            "SOURCE_TEMPLATE_GROUP",
+            "LEXICAL_SIMILARITY",
+            "LEXICAL_REPRESENTATIVE"
+          ]
+        },
+        "semantic_group_key": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "dedup_decision": {
+          "enum": [
+            "KEEP",
+            "DROP_EXACT_DUPLICATE",
+            "KEEP_VARIANT",
+            "REVIEW"
+          ]
+        }
+      }
+    },
+    "quality": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "quality_schema_version",
+        "mapping_quality",
+        "grouping",
+        "hashes",
+        "deduplication",
+        "split"
+      ],
+      "properties": {
+        "quality_schema_version": {
+          "const": "0.1"
+        },
+        "mapping_quality": {
+          "$ref": "#/$defs/mappingQuality"
+        },
+        "grouping": {
+          "$ref": "#/$defs/grouping"
+        },
+        "hashes": {
+          "$ref": "#/$defs/hashes"
+        },
+        "deduplication": {
+          "$ref": "#/$defs/deduplication"
+        },
+        "split": {
+          "enum": [
+            "train",
+            "validation",
+            "test_id",
+            "test_held_out_source",
+            "test_held_out_family",
+            "DROPPED_EXACT"
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "deduplication": {
+                "properties": {
+                  "dedup_decision": {
+                    "const": "DROP_EXACT_DUPLICATE"
+                  }
+                },
+                "required": [
+                  "dedup_decision"
+                ]
+              }
+            },
+            "required": [
+              "deduplication"
+            ]
+          },
+          "then": {
+            "properties": {
+              "split": {
+                "const": "DROPPED_EXACT"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "split": {
+                "not": {
+                  "const": "DROPPED_EXACT"
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "deduplication": {
+                "properties": {
+                  "semantic_assignment_method": {
+                    "const": "SOURCE_TEMPLATE_GROUP"
+                  }
+                },
+                "required": [
+                  "semantic_assignment_method"
+                ]
+              }
+            },
+            "required": [
+              "deduplication"
+            ]
+          },
+          "then": {
+            "properties": {
+              "deduplication": {
+                "properties": {
+                  "semantic_group_key": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "deduplication": {
+                "properties": {
+                  "semantic_group_key": {
+                    "type": "null"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

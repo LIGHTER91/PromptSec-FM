@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build one configured source into validated canonical JSONL."""
+"""Build one source JSONL or a complete audited dataset release."""
 
 import sys
 from pathlib import Path

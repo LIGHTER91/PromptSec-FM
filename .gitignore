@@ -26,6 +26,17 @@ Thumbs.db
 data/*
 !data/.gitkeep
 !data/README.md
+!data/releases/
+data/releases/*
+!data/releases/promptsec-dataset-v0.1/
+!data/releases/promptsec-dataset-v0.1/**
 reports/*
 !reports/.gitkeep
 !reports/README.md
+!reports/data_statistics/
+reports/data_statistics/*
+!reports/data_statistics/dataset_v0.1.json
+!reports/data_statistics/dataset_v0.1.md
+!reports/label_mapping/
+reports/label_mapping/*
+!reports/label_mapping/review_queue_v0.1.jsonl

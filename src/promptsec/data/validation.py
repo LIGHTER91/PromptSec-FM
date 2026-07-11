@@ -11,6 +11,7 @@ import json
 import re
 import sys
 from collections.abc import Mapping, Sequence
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -30,6 +31,7 @@ _INSTALLED_SCHEMA_PATH = (
     / "promptsec-dataset-record-v0.1.schema.json"
 )
 _ANNOTATION_SCHEMA_NAME = "promptsec-annotation-v1.schema.json"
+_DATASET_SCHEMA_NAME = "promptsec-dataset-record-v0.1.schema.json"
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 
 _VERDICT_AXES = (
@@ -166,6 +168,7 @@ def require_valid_record(
         raise ValidationError(errors)
 
 
+@lru_cache(maxsize=8)
 def _build_validator(schema_path: Path) -> Draft202012Validator:
     profile_path = schema_path.resolve()
     annotation_path = profile_path.with_name(_ANNOTATION_SCHEMA_NAME)
@@ -186,6 +189,16 @@ def _build_validator(schema_path: Path) -> Draft202012Validator:
 
     registry = Registry().with_resource(annotation_id, annotation_resource)
     registry = registry.with_resource(annotation_path.as_uri(), annotation_resource)
+    dataset_path = profile_path.with_name(_DATASET_SCHEMA_NAME)
+    if profile_path != dataset_path and dataset_path.is_file():
+        dataset = _load_json_object(dataset_path)
+        Draft202012Validator.check_schema(dataset)
+        dataset_id = dataset.get("$id")
+        if not isinstance(dataset_id, str) or not dataset_id:
+            raise ValueError(f"dataset schema has no $id: {dataset_path}")
+        dataset_resource = Resource.from_contents(dataset)
+        registry = registry.with_resource(dataset_id, dataset_resource)
+        registry = registry.with_resource(dataset_path.as_uri(), dataset_resource)
     return Draft202012Validator(
         profile,
         registry=registry,
