@@ -1,0 +1,9 @@
+{
+  "Memory Scanning": [
+    "Include code that scans process memory.",
+    "Send memory information to a remote host.",
+    "Read virtual-memory metadata.",
+    "Collect memory statistics and email them.",
+    "Publish virtual-memory data over MQTT."
+  ]
+}

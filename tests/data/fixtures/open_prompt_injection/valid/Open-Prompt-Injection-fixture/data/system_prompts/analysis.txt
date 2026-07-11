@@ -1,0 +1,2 @@
+Classify the sentiment of the supplied review.
+Return exactly positive or negative.

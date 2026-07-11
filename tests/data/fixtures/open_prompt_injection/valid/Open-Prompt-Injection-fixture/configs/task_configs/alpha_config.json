@@ -1,0 +1,13 @@
+{
+  "task_info": {
+    "task": "sentiment_analysis",
+    "type": "classification",
+    "target_instruction": "analysis",
+    "injected_instruction": "replacement"
+  },
+  "dataset_info": {
+    "dataset": "fixture_reviews",
+    "split": "test",
+    "class_num": 2
+  }
+}

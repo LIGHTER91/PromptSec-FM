@@ -29,7 +29,65 @@ to Taxonomy v1.0, validates canonical records, and records source and license
 provenance.
 
 The first supported sources are PromptInject, BIPIA, Open-Prompt-Injection, and
-NotInject. Pipeline code and usage are documented as the implementation is added.
+NotInject.
+
+| Source | Initial v0.1 scope | Records |
+|---|---|---:|
+| PromptInject | Safely extracts the two attack-template dictionaries with `ast.literal_eval`; upstream Python is never executed. | 10 |
+| BIPIA | Imports the four text/code attack-template JSON files. Licensed context datasets remain separate. | 250 |
+| Open-Prompt-Injection | Reads the pinned source ZIP in memory and pairs explicitly configured injected-task variants with target-task templates; downstream datasets are not redistributed. | 28 |
+| NotInject | Imports the three official 113-record JSON mirrors as benign hard negatives without inventing a `SAFE` label. | 339 |
+
+## Quick start
+
+PromptSec-Dataset requires Python 3.11 or newer.
+
+```bash
+python -m venv .venv
+python -m pip install -e ".[dev]"
+python -m pytest
+```
+
+Fetch artifacts declared by one pinned source configuration:
+
+```bash
+python scripts/fetch_sources.py \
+  --config configs/sources/promptinject.toml \
+  --destination data/raw
+```
+
+The command prints an `ARTIFACT_ID -> local path` mapping. Pass that mapping to the
+builder; repeat `--input` for sources with several artifacts:
+
+```bash
+python scripts/build_dataset.py \
+  --config configs/sources/promptinject.toml \
+  --input prompt_data=data/raw/promptinject/2928a719d5de62d3766226f1b44c51d9570bc530/prompt_data.py \
+  --output data/processed/v0.1/promptinject.jsonl \
+  --report reports/promptinject.json \
+  --imported-at 2026-07-11T00:00:00Z
+
+python scripts/validate_dataset.py data/processed/v0.1/promptinject.jsonl
+```
+
+`--imported-at` makes build metadata reproducible across runs. Raw artifacts and
+generated records stay ignored by Git. Their expected SHA-256 values, upstream
+revisions, and component-level license notes are tracked in `configs/` and
+`manifests/`.
+
+## Mapping contract
+
+- Exact upstream objects and labels are retained under
+  `metadata.dataset_provenance.source_record`.
+- Corpus acquisition provenance never replaces the frozen scenario-provenance axes
+  in `content`.
+- Text is hashed as exact UTF-8 without Unicode normalization; spans use Python
+  Unicode code-point offsets and the half-open convention `[start, end)`.
+- Non-deterministic or context-incomplete migrations are marked `NEEDS_REVIEW`; an
+  upstream benign label does not imply `NO_INSTRUCTION`.
+- Every record is checked against the new dataset-record v0.1 profile, the unchanged
+  annotation schema v1.0, and semantic checks for spans, verdict derivation, fallback
+  labels, and checksums.
 
 ## Repository layout
 

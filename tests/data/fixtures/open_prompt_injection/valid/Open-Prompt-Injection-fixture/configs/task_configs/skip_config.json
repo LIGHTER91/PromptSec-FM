@@ -1,0 +1,11 @@
+{
+  "task_info": {
+    "task": "output",
+    "type": "text_generation",
+    "target_instruction": "",
+    "injected_instruction": ""
+  },
+  "dataset_info": {
+    "dataset": "not_imported"
+  }
+}

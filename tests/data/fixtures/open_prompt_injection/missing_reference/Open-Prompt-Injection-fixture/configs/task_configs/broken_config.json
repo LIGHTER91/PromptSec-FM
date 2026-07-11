@@ -1,0 +1,11 @@
+{
+  "task_info": {
+    "task": "sentiment_analysis",
+    "type": "classification",
+    "target_instruction": "analysis",
+    "injected_instruction": "missing_injected_template"
+  },
+  "dataset_info": {
+    "dataset": "fixture_reviews"
+  }
+}

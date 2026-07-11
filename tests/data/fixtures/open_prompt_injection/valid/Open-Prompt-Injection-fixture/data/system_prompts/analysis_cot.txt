@@ -1,0 +1,1 @@
+This target-side chain-of-thought variant must not replace the exact target template.
