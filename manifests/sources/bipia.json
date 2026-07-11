@@ -1,0 +1,66 @@
+{
+  "$schema": "../../schemas/source-license-manifest-v0.1.schema.json",
+  "schema_version": "0.1",
+  "source_id": "bipia",
+  "verified_at": "2026-07-11",
+  "upstream": {
+    "homepage": "https://github.com/microsoft/BIPIA",
+    "repository": "https://github.com/microsoft/BIPIA.git",
+    "revision": "a004b69ec0dd446e0afd461d98cb5e96e120a5d0"
+  },
+  "license_status": "multiple",
+  "components": [
+    {
+      "scope": "repository software outside dataset exceptions",
+      "license_expression": "MIT",
+      "license_url": "https://github.com/microsoft/BIPIA/blob/a004b69ec0dd446e0afd461d98cb5e96e120a5d0/LICENSE",
+      "redistribution": "allowed",
+      "notes": "The repository license explicitly excludes the dataset components listed below."
+    },
+    {
+      "scope": "benchmark/table (WikiTableQuestions)",
+      "license_expression": "CC-BY-SA-4.0",
+      "license_url": "https://github.com/ppasupat/WikiTableQuestions/blob/master/LICENSE",
+      "redistribution": "conditional",
+      "notes": "Attribution and ShareAlike obligations apply."
+    },
+    {
+      "scope": "benchmark/code (Stack Exchange excerpts)",
+      "license_expression": "CC-BY-SA-4.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "redistribution": "conditional",
+      "notes": "Keep the question URLs and author information present in BIPIA records."
+    },
+    {
+      "scope": "benchmark/email (OpenAI Evals invoices)",
+      "license_expression": "MIT",
+      "license_url": "https://github.com/openai/evals/blob/main/LICENSE.md",
+      "redistribution": "allowed",
+      "notes": "Consult the upstream OpenAI Evals source before release."
+    },
+    {
+      "scope": "benchmark/qa (NewsQA) and benchmark/abstract (XSum)",
+      "license_expression": "NOASSERTION",
+      "license_url": "https://github.com/microsoft/BIPIA/blob/a004b69ec0dd446e0afd461d98cb5e96e120a5d0/benchmark/README.md",
+      "redistribution": "not-redistributed",
+      "notes": "BIPIA requires users to acquire and generate these contexts from the original datasets."
+    },
+    {
+      "scope": "benchmark/*_attack_{train,test}.json",
+      "license_expression": "NOASSERTION",
+      "license_url": "https://github.com/microsoft/BIPIA/blob/a004b69ec0dd446e0afd461d98cb5e96e120a5d0/LICENSE",
+      "redistribution": "unknown",
+      "notes": "The LICENSE does not classify project-authored attack JSON separately; verify before a redistributed release."
+    }
+  ],
+  "constraints": [
+    "Do not represent BIPIA benchmark data as globally MIT licensed.",
+    "Do not fetch or redistribute NewsQA or XSum contexts through this pipeline.",
+    "Retain record-level URLs and authors for Stack Exchange-derived code contexts.",
+    "Perform a release-time license review of attack JSON redistribution."
+  ],
+  "citations": [
+    "Yi et al. (2023). Benchmarking and Defending Against Indirect Prompt Injection Attacks on Large Language Models."
+  ]
+}
+

@@ -1,0 +1,46 @@
+schema_version = "0.1"
+
+[source]
+id = "notinject"
+name = "NotInject"
+homepage = "https://huggingface.co/datasets/leolee99/NotInject"
+repository = "https://github.com/leolee99/PIGuard.git"
+version = "hf:847ae76cf8fea5ed325429e569ae8cfef022d2e0"
+revision = "1b5751e88bf7475acbedfc8eda795ce060307c84"
+license_manifest = "manifests/sources/notinject.json"
+importer = "promptsec.data.importers.notinject:NotInjectImporter"
+
+[scenario]
+language = "en"
+delivery_mode = "DIRECT"
+source_role = "USER"
+content_origin = "CHAT_MESSAGE"
+ingestion_path = "CHAT_INPUT"
+modality = "TEXT"
+source_integrity = "UNKNOWN"
+
+[fields]
+text = ["prompt", "text"]
+labels = ["word_list", "category", "label"]
+record_id = ["id", "source_id"]
+
+[[artifacts]]
+id = "notinject_one"
+split = "NotInject_one"
+format = "json"
+url = "https://raw.githubusercontent.com/leolee99/PIGuard/1b5751e88bf7475acbedfc8eda795ce060307c84/datasets/NotInject_one.json"
+sha256 = "69b535596d95102424e9c5946944feb4f2d596687eb8213f2ecad75478e5ffdd"
+
+[[artifacts]]
+id = "notinject_two"
+split = "NotInject_two"
+format = "json"
+url = "https://raw.githubusercontent.com/leolee99/PIGuard/1b5751e88bf7475acbedfc8eda795ce060307c84/datasets/NotInject_two.json"
+sha256 = "6043d94e75b48d8e7682d25dc79eaf45359e1e561ce520e3b8fd5625a91060c6"
+
+[[artifacts]]
+id = "notinject_three"
+split = "NotInject_three"
+format = "json"
+url = "https://raw.githubusercontent.com/leolee99/PIGuard/1b5751e88bf7475acbedfc8eda795ce060307c84/datasets/NotInject_three.json"
+sha256 = "ef01eff0d761d2e34571b3fdbcec08c30cd93efe8d0e1a2eb5c2baeb1873b070"

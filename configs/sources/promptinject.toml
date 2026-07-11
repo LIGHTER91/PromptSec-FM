@@ -1,0 +1,32 @@
+schema_version = "0.1"
+
+[source]
+id = "promptinject"
+name = "PromptInject"
+homepage = "https://github.com/agencyenterprise/PromptInject"
+repository = "https://github.com/agencyenterprise/PromptInject.git"
+version = "2022-paper-artifacts"
+revision = "2928a719d5de62d3766226f1b44c51d9570bc530"
+license_manifest = "manifests/sources/promptinject.json"
+importer = "promptsec.data.importers.promptinject:PromptInjectImporter"
+
+[scenario]
+language = "en"
+delivery_mode = "DIRECT"
+source_role = "USER"
+content_origin = "CHAT_MESSAGE"
+ingestion_path = "CHAT_INPUT"
+modality = "TEXT"
+source_integrity = "UNKNOWN"
+
+[fields]
+text = ["instruction"]
+labels = ["collection", "key", "label"]
+record_id = ["source_id"]
+
+[[artifacts]]
+id = "prompt_data"
+split = "unsplit"
+format = "python"
+url = "https://raw.githubusercontent.com/agencyenterprise/PromptInject/2928a719d5de62d3766226f1b44c51d9570bc530/promptinject/prompt_data.py"
+sha256 = "d26af509698c5f88e611a163cc162ab903d41040cc6307db9f6ee4b6195a5b6e"

@@ -1,0 +1,29 @@
+{
+  "$schema": "../../schemas/source-license-manifest-v0.1.schema.json",
+  "schema_version": "0.1",
+  "source_id": "promptinject",
+  "verified_at": "2026-07-11",
+  "upstream": {
+    "homepage": "https://github.com/agencyenterprise/PromptInject",
+    "repository": "https://github.com/agencyenterprise/PromptInject.git",
+    "revision": "2928a719d5de62d3766226f1b44c51d9570bc530"
+  },
+  "license_status": "single",
+  "components": [
+    {
+      "scope": "promptinject/prompt_data.py",
+      "license_expression": "MIT",
+      "license_url": "https://github.com/agencyenterprise/PromptInject/blob/2928a719d5de62d3766226f1b44c51d9570bc530/LICENSE",
+      "redistribution": "allowed",
+      "notes": "Attack and prompt templates are distributed in the MIT-licensed repository."
+    }
+  ],
+  "constraints": [
+    "Retain the MIT copyright and permission notice in substantial redistributions.",
+    "Preserve the original template keys, labels, and placeholders during conversion."
+  ],
+  "citations": [
+    "Perez, F. and Ribeiro, I. (2022). Ignore Previous Prompt: Attack Techniques for Language Models. arXiv:2211.09527."
+  ]
+}
+

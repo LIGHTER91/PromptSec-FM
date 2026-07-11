@@ -1,0 +1,30 @@
+{
+  "$schema": "../../schemas/source-license-manifest-v0.1.schema.json",
+  "schema_version": "0.1",
+  "source_id": "notinject",
+  "verified_at": "2026-07-11",
+  "upstream": {
+    "homepage": "https://huggingface.co/datasets/leolee99/NotInject",
+    "repository": "https://github.com/leolee99/PIGuard.git",
+    "revision": "hf:847ae76cf8fea5ed325429e569ae8cfef022d2e0; github:1b5751e88bf7475acbedfc8eda795ce060307c84"
+  },
+  "license_status": "single",
+  "components": [
+    {
+      "scope": "NotInject_one, NotInject_two, and NotInject_three (339 benign prompts)",
+      "license_expression": "MIT",
+      "license_url": "https://huggingface.co/datasets/leolee99/NotInject/blob/847ae76cf8fea5ed325429e569ae8cfef022d2e0/README.md",
+      "redistribution": "allowed",
+      "notes": "The pipeline reads the official authors' JSON mirror in the MIT-licensed PIGuard repository."
+    }
+  ],
+  "constraints": [
+    "Import exactly the three named NotInject subsets, each containing 113 records.",
+    "Preserve trigger-word lists and category labels as original labels.",
+    "Do not treat benign source labels as proof that no instruction is present."
+  ],
+  "citations": [
+    "Li et al. (2025). PIGuard: Prompt Injection Guardrail via Mitigating Overdefense for Free. ACL 2025."
+  ]
+}
+

@@ -1,0 +1,302 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/LIGHTER91/PromptSec-FM/schemas/promptsec-dataset-record-v0.1.schema.json",
+  "title": "PromptSec-FM Dataset Record v0.1",
+  "description": "Dataset-record profile of the frozen PromptSec-FM annotation schema v1.0, with reproducibility provenance.",
+  "allOf": [
+    {
+      "$ref": "https://github.com/LIGHTER91/PromptSec-FM/schemas/promptsec-annotation-v1.schema.json"
+    },
+    {
+      "type": "object",
+      "required": [
+        "metadata"
+      ],
+      "properties": {
+        "metadata": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "record_schema_version",
+            "dataset_provenance"
+          ],
+          "properties": {
+            "record_schema_version": {
+              "const": "0.1"
+            },
+            "dataset_provenance": {
+              "$ref": "#/$defs/datasetProvenance"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "datasetProvenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_dataset",
+        "source_record",
+        "import",
+        "mapping",
+        "checksums"
+      ],
+      "properties": {
+        "source_dataset": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "id",
+            "name",
+            "version",
+            "revision",
+            "url",
+            "license_manifest"
+          ],
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "version": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "revision": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "url": {
+              "type": "string",
+              "format": "uri"
+            },
+            "license_manifest": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "source_record": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "id",
+            "split",
+            "index",
+            "raw_artifact",
+            "raw_record_sha256",
+            "original_fields",
+            "original_labels"
+          ],
+          "properties": {
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "split": {
+              "type": "string",
+              "minLength": 1
+            },
+            "index": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "raw_artifact": {
+              "type": "string",
+              "minLength": 1
+            },
+            "raw_record_sha256": {
+              "$ref": "#/$defs/sha256"
+            },
+            "original_fields": {
+              "type": "object"
+            },
+            "original_labels": {
+              "type": "object"
+            }
+          }
+        },
+        "import": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "importer",
+            "importer_version",
+            "config",
+            "config_sha256",
+            "imported_at",
+            "transformations"
+          ],
+          "properties": {
+            "importer": {
+              "type": "string",
+              "minLength": 1
+            },
+            "importer_version": {
+              "type": "string",
+              "minLength": 1
+            },
+            "config": {
+              "type": "string",
+              "minLength": 1
+            },
+            "config_sha256": {
+              "$ref": "#/$defs/sha256"
+            },
+            "imported_at": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "transformations": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "uniqueItems": true
+            }
+          }
+        },
+        "mapping": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "ruleset",
+            "status",
+            "field_mappings",
+            "unmapped_labels",
+            "review_reasons"
+          ],
+          "properties": {
+            "ruleset": {
+              "type": "string",
+              "minLength": 1
+            },
+            "status": {
+              "enum": [
+                "DETERMINISTIC",
+                "NEEDS_REVIEW",
+                "UNMAPPED",
+                "EXCLUDED"
+              ]
+            },
+            "field_mappings": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "source",
+                  "target",
+                  "method"
+                ],
+                "properties": {
+                  "source": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "target": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "method": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              }
+            },
+            "unmapped_labels": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "uniqueItems": true
+            },
+            "review_reasons": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "uniqueItems": true
+            }
+          },
+          "allOf": [
+            {
+              "if": {
+                "properties": { "status": { "const": "DETERMINISTIC" } },
+                "required": ["status"]
+              },
+              "then": {
+                "properties": {
+                  "unmapped_labels": { "maxItems": 0 },
+                  "review_reasons": { "maxItems": 0 }
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": { "status": { "const": "NEEDS_REVIEW" } },
+                "required": ["status"]
+              },
+              "then": {
+                "properties": { "review_reasons": { "minItems": 1 } }
+              }
+            },
+            {
+              "if": {
+                "properties": { "status": { "const": "UNMAPPED" } },
+                "required": ["status"]
+              },
+              "then": {
+                "properties": { "unmapped_labels": { "minItems": 1 } }
+              }
+            },
+            {
+              "if": {
+                "properties": { "status": { "const": "EXCLUDED" } },
+                "required": ["status"]
+              },
+              "then": {
+                "properties": { "review_reasons": { "minItems": 1 } }
+              }
+            }
+          ]
+        },
+        "checksums": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "source_text_sha256",
+            "canonical_text_sha256"
+          ],
+          "properties": {
+            "source_text_sha256": {
+              "$ref": "#/$defs/sha256"
+            },
+            "canonical_text_sha256": {
+              "$ref": "#/$defs/sha256"
+            }
+          }
+        }
+      }
+    }
+  }
+}

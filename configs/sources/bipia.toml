@@ -1,0 +1,53 @@
+schema_version = "0.1"
+
+[source]
+id = "bipia"
+name = "BIPIA"
+homepage = "https://github.com/microsoft/BIPIA"
+repository = "https://github.com/microsoft/BIPIA.git"
+version = "paper-benchmark"
+revision = "a004b69ec0dd446e0afd461d98cb5e96e120a5d0"
+license_manifest = "manifests/sources/bipia.json"
+importer = "promptsec.data.importers.bipia:BIPIAImporter"
+
+[scenario]
+language = "en"
+delivery_mode = "INDIRECT"
+source_role = "EXTERNAL_CONTENT"
+content_origin = "UNKNOWN"
+ingestion_path = "RETRIEVAL"
+modality = "TEXT"
+source_integrity = "UNKNOWN"
+
+[fields]
+text = ["instruction"]
+labels = ["attack_domain", "payload_type"]
+record_id = ["source_id"]
+
+[[artifacts]]
+id = "text_attack_train"
+split = "train"
+format = "json"
+url = "https://raw.githubusercontent.com/microsoft/BIPIA/a004b69ec0dd446e0afd461d98cb5e96e120a5d0/benchmark/text_attack_train.json"
+sha256 = "63f95d3e67eac4178cdabdbdaf192cd05f2b6ed0702b578f1d30d556e5155670"
+
+[[artifacts]]
+id = "text_attack_test"
+split = "test"
+format = "json"
+url = "https://raw.githubusercontent.com/microsoft/BIPIA/a004b69ec0dd446e0afd461d98cb5e96e120a5d0/benchmark/text_attack_test.json"
+sha256 = "75750e7b4e8b34e8f9d88d89b357aeaaf02bd07f9e493ccd37eda74a0cd7c7f8"
+
+[[artifacts]]
+id = "code_attack_train"
+split = "train"
+format = "json"
+url = "https://raw.githubusercontent.com/microsoft/BIPIA/a004b69ec0dd446e0afd461d98cb5e96e120a5d0/benchmark/code_attack_train.json"
+sha256 = "fe515080b6da2b5c0b67ca7ba2a3b3c2ce57c48f45733c475ebc813cba118484"
+
+[[artifacts]]
+id = "code_attack_test"
+split = "test"
+format = "json"
+url = "https://raw.githubusercontent.com/microsoft/BIPIA/a004b69ec0dd446e0afd461d98cb5e96e120a5d0/benchmark/code_attack_test.json"
+sha256 = "892545c5aaec0645b1ded65dc7816b3d70e9ef4eadcba2301a7a3db93676b6e0"

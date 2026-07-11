@@ -1,0 +1,37 @@
+{
+  "$schema": "../../schemas/source-license-manifest-v0.1.schema.json",
+  "schema_version": "0.1",
+  "source_id": "open_prompt_injection",
+  "verified_at": "2026-07-11",
+  "upstream": {
+    "homepage": "https://github.com/liu00222/Open-Prompt-Injection",
+    "repository": "https://github.com/liu00222/Open-Prompt-Injection.git",
+    "revision": "95290f7ce3794c4c52ad3fe8113db2bfcdfe89e0"
+  },
+  "license_status": "multiple",
+  "components": [
+    {
+      "scope": "benchmark harness, task configurations, and system-prompt templates",
+      "license_expression": "MIT",
+      "license_url": "https://github.com/liu00222/Open-Prompt-Injection/blob/95290f7ce3794c4c52ad3fe8113db2bfcdfe89e0/LICENSE",
+      "redistribution": "allowed",
+      "notes": "The initial importer consumes only these repository-authored benchmark definitions."
+    },
+    {
+      "scope": "datasets dynamically loaded by OpenPromptInjection/tasks",
+      "license_expression": "NOASSERTION",
+      "license_url": "https://github.com/liu00222/Open-Prompt-Injection/tree/95290f7ce3794c4c52ad3fe8113db2bfcdfe89e0/OpenPromptInjection/tasks",
+      "redistribution": "not-redistributed",
+      "notes": "SST-2/GLUE, SMS Spam, HSOL, JFLEG, Gigaword, and other upstream datasets retain their own terms."
+    }
+  ],
+  "constraints": [
+    "Do not ingest the unrelated guychuk/open-prompt-injection Hugging Face dataset as an official project artifact.",
+    "Do not download or redistribute downstream task datasets through the initial importer.",
+    "Review every downstream dataset license before materializing full benchmark examples."
+  ],
+  "citations": [
+    "Liu et al. (2023). Formalizing and Benchmarking Prompt Injection Attacks and Defenses. arXiv:2310.12815."
+  ]
+}
+

@@ -28,3 +28,4 @@ data/*
 !data/README.md
 reports/*
 !reports/.gitkeep
+!reports/README.md

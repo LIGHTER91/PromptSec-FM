@@ -1,0 +1,32 @@
+schema_version = "0.1"
+
+[source]
+id = "open_prompt_injection"
+name = "Open-Prompt-Injection"
+homepage = "https://github.com/liu00222/Open-Prompt-Injection"
+repository = "https://github.com/liu00222/Open-Prompt-Injection.git"
+version = "paper-benchmark"
+revision = "95290f7ce3794c4c52ad3fe8113db2bfcdfe89e0"
+license_manifest = "manifests/sources/open_prompt_injection.json"
+importer = "promptsec.data.importers.open_prompt_injection:OpenPromptInjectionImporter"
+
+[scenario]
+language = "en"
+delivery_mode = "INDIRECT"
+source_role = "EXTERNAL_CONTENT"
+content_origin = "UNKNOWN"
+ingestion_path = "RETRIEVAL"
+modality = "TEXT"
+source_integrity = "UNKNOWN"
+
+[fields]
+text = ["injected_instruction"]
+labels = ["task", "task_type", "dataset", "target_instruction_name", "injected_instruction_name"]
+record_id = ["task_config"]
+
+[[artifacts]]
+id = "source_archive"
+split = "benchmark_definitions"
+format = "zip"
+url = "https://github.com/liu00222/Open-Prompt-Injection/archive/95290f7ce3794c4c52ad3fe8113db2bfcdfe89e0.zip"
+sha256 = "c7b11e843136a40fec74a9dfd5f694031254e66131b216a2de591501ba96d50b"
