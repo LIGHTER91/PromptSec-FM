@@ -1,0 +1,30 @@
+# Python bytecode and tooling
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+build/
+dist/
+
+# Environments and local configuration
+.venv/
+venv/
+.env
+.env.*
+
+# Editors and operating systems
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Downloaded/generated datasets and reports
+data/*
+!data/.gitkeep
+!data/README.md
+reports/*
+!reports/.gitkeep
