@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/LIGHTER91/PromptSec-FM/schemas/promptsec-release-record-v0.2.schema.json",
+  "title": "PromptSec-FM Release Record v0.2",
+  "description": "Phase 3.3 release profile; retains Taxonomy v1.0 and adds the provisional agentic split.",
+  "allOf": [
+    {
+      "$ref": "https://github.com/LIGHTER91/PromptSec-FM/schemas/promptsec-release-record-v0.1.schema.json"
+    }
+  ]
+}

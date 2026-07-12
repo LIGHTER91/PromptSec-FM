@@ -25,8 +25,9 @@ def _record(
     user_goal_alignment: str = "MISALIGNED",
     protected_policy_alignment: str = "COMPLIANT",
     authority_status: str = "OUTSIDE_AUTHORITY",
+    agentic_source: dict | None = None,
 ) -> dict:
-    return {
+    record = {
         "id": record_id,
         "content": {
             "text": text,
@@ -64,6 +65,9 @@ def _record(
         },
         "metadata": {"dataset_provenance": {"source_dataset": {"id": source}}},
     }
+    if agentic_source is not None:
+        record["extensions"]["agentic_source"] = agentic_source
+    return record
 
 
 def _corpus() -> list[dict]:
@@ -143,6 +147,13 @@ def test_compute_statistics_covers_distributions_mapping_and_unknown_axes() -> N
             "HEURISTIC_MAPPING": 1,
             "UNANNOTATED": 1,
         },
+        "benchmark_suite": {},
+        "user_tool": {},
+        "attacker_tool": {},
+        "injecagent_attack_category": {},
+        "injecagent_setting": {},
+        "agentdojo_suite": {},
+        "mapping_confidence": {"0.00": 1, "0.60": 1, "1.00": 1},
     }
     mapping = stats["mapping_quality"]
     assert mapping["deterministic_mapping"] == {"count": 1, "rate": 0.333333}
@@ -272,7 +283,58 @@ def test_render_statistics_markdown_is_deterministic_and_complete() -> None:
 
     assert first == second
     assert first.endswith("\n")
-    assert "# PromptSec-Dataset v0.1 statistics" in first
+    assert "# PromptSec-Dataset statistics" in first
     assert "| promptinject | 1 | 33.33% |" in first
     assert "| Content UTF-8 bytes | 3 | 0 | 2.333333 | 3.0 | 4 | 4 |" in first
     assert "| annotations.protected_policy_alignment | 0 | 2 | 2 | 66.67% |" in first
+
+
+def test_compute_statistics_reports_agentic_source_metadata() -> None:
+    injecagent = _record(
+        "injecagent-one",
+        source="injecagent",
+        language="en",
+        domain="direct_harm",
+        delivery_mode="INDIRECT",
+        text="perform the injected action",
+        tier="HEURISTIC_MAPPING",
+        confidence=0.8,
+        requires_manual_review=True,
+        attack_families=["PROMPT_INJECTION"],
+        attack_objectives=["UNAUTHORIZED_ACTION"],
+        spans=[],
+        agentic_source={
+            "attack_category": "Direct Harm",
+            "setting": "enhanced",
+            "user_tool": "MailSearch",
+            "attacker_tools": ["MailSend", "CalendarWrite"],
+        },
+    )
+    agentdojo = _record(
+        "agentdojo-one",
+        source="agentdojo",
+        language="en",
+        domain="workspace",
+        delivery_mode="INDIRECT",
+        text="static injection goal",
+        tier="HEURISTIC_MAPPING",
+        confidence=0.55,
+        requires_manual_review=True,
+        attack_families=["PROMPT_INJECTION"],
+        attack_objectives=[],
+        spans=[],
+        user_goal_alignment="UNDETERMINED",
+        protected_policy_alignment="UNDETERMINED",
+        authority_status="UNKNOWN",
+        agentic_source={"suite_id": "workspace"},
+    )
+
+    distributions = compute_statistics([injecagent, agentdojo])["distributions"]
+
+    assert distributions["benchmark_suite"] == {"workspace": 1}
+    assert distributions["agentdojo_suite"] == {"workspace": 1}
+    assert distributions["user_tool"] == {"MailSearch": 1}
+    assert distributions["attacker_tool"] == {"CalendarWrite": 1, "MailSend": 1}
+    assert distributions["injecagent_attack_category"] == {"Direct Harm": 1}
+    assert distributions["injecagent_setting"] == {"enhanced": 1}
+    assert distributions["mapping_confidence"] == {"0.55": 1, "0.80": 1}

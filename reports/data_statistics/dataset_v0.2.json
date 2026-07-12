@@ -1,0 +1,454 @@
+{
+  "content_length": {
+    "characters": {
+      "count": 3684,
+      "max": 593,
+      "mean": 173.600163,
+      "median": 162.0,
+      "min": 11,
+      "p95": 366
+    },
+    "utf8_bytes": {
+      "count": 3684,
+      "max": 593,
+      "mean": 174.726384,
+      "median": 162.0,
+      "min": 17,
+      "p95": 366
+    }
+  },
+  "distributions": {
+    "agentdojo_suite": {
+      "banking": 144,
+      "slack": 105,
+      "travel": 140,
+      "workspace": 560
+    },
+    "annotation_tier": {
+      "DETERMINISTIC_MAPPING": 10,
+      "HEURISTIC_MAPPING": 3335,
+      "UNANNOTATED": 339
+    },
+    "attack_family": {
+      "NONE": 339,
+      "PROMPT_INJECTION": 3345
+    },
+    "attack_objective": {
+      "NONE": 1288,
+      "PROMPT_OR_POLICY_DISCLOSURE": 5,
+      "SENSITIVE_DATA_EXFILTRATION": 1088,
+      "TASK_HIJACKING": 283,
+      "UNAUTHORIZED_ACTION": 2108
+    },
+    "attacker_tool": {
+      "AmazonViewSavedAddresses": 34,
+      "AmazonViewSavedPaymentMethods": 34,
+      "AugustSmartLockGrantGuestAccess": 34,
+      "AugustSmartLockUnlockDoor": 34,
+      "AugustSmartLockViewAccessHistory": 34,
+      "BankManagerGetAccountInformation": 34,
+      "BankManagerPayBill": 34,
+      "BankManagerSearchPayee": 34,
+      "BankManagerTransferFunds": 34,
+      "BinanceDeposit": 34,
+      "BinanceGetOrderHistory": 34,
+      "BinancePlaceOrder": 34,
+      "BinanceWithdraw": 34,
+      "CiscoUmbrellaCreatePolicy": 34,
+      "CiscoUmbrellaGetLogDetails": 34,
+      "CiscoUmbrellaUpdatePolicy": 34,
+      "DeepfakeGeneratorGenerateAudioDeepfake": 34,
+      "DropboxGetItemMetadata": 34,
+      "DropboxListFilesAndFolders": 34,
+      "DropboxMoveItem": 34,
+      "EmergencyDispatchSystemCreateDispatchRequest": 34,
+      "EpicFHIRDownloadFiles": 34,
+      "EpicFHIRGetPatientDetails": 34,
+      "EpicFHIRManageAppointments": 34,
+      "EpicFHIRManageClinicalDocuments": 34,
+      "EpicFHIRManagePatientRecords": 34,
+      "EvernoteManagerManageNoteSharingLevel": 34,
+      "ExpediaSearchReservations": 34,
+      "FacebookManagerGetUserProfile": 34,
+      "FacebookManagerSearchFriends": 34,
+      "FacebookManagerUpdateUserProfile": 34,
+      "FedExShipManagerManageShipment": 34,
+      "FedExShipManagerSearchShipment": 34,
+      "GitHubDeleteRepository": 34,
+      "GitHubGetUserDetails": 34,
+      "GmailSendEmail": 1088,
+      "GoogleHomeScheduleDeviceAction": 34,
+      "GoogleMapGetCurrentLocation": 34,
+      "GoogleSearchGetSearchHistory": 34,
+      "IndoorRobotGoToRoom": 34,
+      "InvestmentManagerGetHoldingsInformation": 34,
+      "NortonIdentitySafeAutoFillPersonalInfo": 34,
+      "NortonIdentitySafeDisableTwoFactorAuthentication": 34,
+      "NortonIdentitySafeSearchPasswords": 34,
+      "NortonIdentitySafeSharePassword": 34,
+      "SlackLeaveChannel": 34,
+      "SpokeoDownloadPublicRecord": 34,
+      "SpokeoSearchPeople": 34,
+      "TDAmeritradeGetHoldingsInformation": 34,
+      "TeladocAccessUserInfo": 34,
+      "TeladocViewPrescriptions": 34,
+      "TerminalExecute": 34,
+      "The23andMeDownloadData": 34,
+      "The23andMeGetGeneticData": 34,
+      "The23andMeGetHealthRecommendations": 34,
+      "The23andMeShareData": 34,
+      "The23andMeUpdateData": 34,
+      "TrafficControlGivePriorityToEmergencyVehicle": 34,
+      "TrafficControlManageTrafficLightState": 34,
+      "TwilioGetPhoneNumberInfo": 34,
+      "VenmoListLinkedAccounts": 34,
+      "VenmoWithdrawMoney": 34,
+      "WebBrowserSearchHistory": 34
+    },
+    "benchmark_suite": {
+      "banking": 144,
+      "slack": 105,
+      "travel": 140,
+      "workspace": 560
+    },
+    "delivery_mode": {
+      "DIRECT": 349,
+      "INDIRECT": 3335
+    },
+    "domain": {
+      "Alphanumeric Substitution": 5,
+      "Anagramming": 5,
+      "Base Encoding": 5,
+      "Blocking Internet Connection": 5,
+      "Bringing Down Hosts and Servers (Denial of Service)": 5,
+      "Business Intelligence": 5,
+      "Clickbait": 5,
+      "Common Queries": 126,
+      "Compromising Computers": 5,
+      "Content Creation": 5,
+      "Conversational Agent": 5,
+      "Cookie Theft": 5,
+      "Corrupting an Operating System": 5,
+      "Crippling Critical Infrastructures": 5,
+      "Cryptocurrency Mining": 5,
+      "Data Eavesdropping": 5,
+      "Data Security Harm": 374,
+      "Device and Driver Enumeration": 5,
+      "Dumpster Diving": 5,
+      "Emoji Substitution": 5,
+      "Encrypting Documents and Demanding Ransom (Ransomware)": 5,
+      "Entertainment": 5,
+      "Environment Variable Analysis": 5,
+      "Exploiting System Vulnerabilities": 5,
+      "Financial Data": 204,
+      "Financial Harm": 306,
+      "Homophonic Substitution": 5,
+      "Information Dissemination": 5,
+      "Information Retrieval": 5,
+      "Instruction": 5,
+      "Introduce System Fingerprinting": 5,
+      "Keylogging": 5,
+      "Language Translation": 10,
+      "Learning and Tutoring": 5,
+      "Malware Distribution": 5,
+      "Marketing & Advertising": 5,
+      "Memory Scanning": 5,
+      "Misinformation & Propaganda": 5,
+      "Misspelling Intentionally": 5,
+      "Multilingual": 84,
+      "Network Propagation": 5,
+      "Others": 510,
+      "Persuasion": 5,
+      "Physical Data": 374,
+      "Physical Harm": 340,
+      "Programming Help": 5,
+      "Research Assistance": 5,
+      "Reverse Text": 5,
+      "Scams & Fraud": 5,
+      "Screen Scraping": 5,
+      "Sending Out Spam Emails": 5,
+      "Sentiment Analysis": 5,
+      "Social Interaction": 5,
+      "Space Removal & Grouping": 5,
+      "Substitution Ciphers": 5,
+      "Task Automation": 5,
+      "Technique Queries": 87,
+      "Traffic Analysis": 5,
+      "Virtual Creation": 42,
+      "banking": 144,
+      "duplicate_sentence_detection": 4,
+      "goal_hikacking_attacks": 5,
+      "grammar_correction": 4,
+      "hate_detection": 4,
+      "natural_language_inference": 4,
+      "prompt_leaking_attacks": 5,
+      "sentiment_analysis": 4,
+      "slack": 105,
+      "spam_detection": 4,
+      "summarization": 4,
+      "travel": 140,
+      "workspace": 560
+    },
+    "injecagent_attack_category": {
+      "Data Security Harm": 374,
+      "Financial Data": 204,
+      "Financial Harm": 306,
+      "Others": 510,
+      "Physical Data": 374,
+      "Physical Harm": 340
+    },
+    "injecagent_setting": {
+      "base": 1054,
+      "enhanced": 1054
+    },
+    "language": {
+      "en": 3600,
+      "und": 84
+    },
+    "mapping_confidence": {
+      "0.00": 339,
+      "0.55": 949,
+      "0.70": 250,
+      "0.80": 2136,
+      "1.00": 10
+    },
+    "source": {
+      "agentdojo": 949,
+      "bipia": 250,
+      "injecagent": 2108,
+      "notinject": 339,
+      "open_prompt_injection": 28,
+      "promptinject": 10
+    },
+    "user_tool": {
+      "AmazonGetProductDetails": 124,
+      "EvernoteManagerSearchNotes": 124,
+      "GitHubGetRepositoryDetails": 124,
+      "GitHubGetUserDetails": 124,
+      "GitHubSearchRepositories": 124,
+      "GmailReadEmail": 124,
+      "GmailSearchEmails": 124,
+      "GoogleCalendarGetEventsFromSharedCalendar": 124,
+      "GoogleCalendarReadEvents": 124,
+      "ShopifyGetProductDetails": 124,
+      "TeladocViewReviews": 124,
+      "TodoistSearchTasks": 124,
+      "TwilioGetReceivedSmsMessages": 124,
+      "TwitterManagerGetUserProfile": 124,
+      "TwitterManagerReadTweet": 124,
+      "TwitterManagerSearchTweets": 124,
+      "WebBrowserNavigateTo": 124
+    }
+  },
+  "mapping_quality": {
+    "deterministic_mapping": {
+      "count": 10,
+      "rate": 0.002714
+    },
+    "heuristic_mapping": {
+      "count": 3335,
+      "rate": 0.905266
+    },
+    "mapping_confidence": {
+      "count": 3684,
+      "max": 1.0,
+      "mean": 0.655741,
+      "median": 0.8,
+      "min": 0.0,
+      "p95": 0.8
+    },
+    "missing_mapping_confidence": {
+      "count": 0,
+      "rate": 0.0
+    },
+    "requires_manual_review": {
+      "count": 3674,
+      "rate": 0.997286
+    },
+    "review_candidates": {
+      "count": 3684,
+      "rate": 1.0
+    },
+    "review_queue": {
+      "count": 3684,
+      "rate": 1.0,
+      "threshold": 0.85
+    },
+    "tiers": {
+      "DETERMINISTIC_MAPPING": {
+        "count": 10,
+        "rate": 0.002714
+      },
+      "GOLD_SOURCE": {
+        "count": 0,
+        "rate": 0.0
+      },
+      "HEURISTIC_MAPPING": {
+        "count": 3335,
+        "rate": 0.905266
+      },
+      "UNANNOTATED": {
+        "count": 339,
+        "rate": 0.09202
+      }
+    }
+  },
+  "release": {
+    "dropped_exact_duplicates": 2,
+    "id": "promptsec-dataset-v0.2",
+    "imported_records": 3684,
+    "records_by_split": {
+      "test_agentic_provisional": 3057,
+      "test_held_out_family": 4,
+      "test_held_out_source": 28,
+      "test_id": 300,
+      "train": 211,
+      "validation": 82
+    },
+    "released_records": 3682,
+    "review_queue_records": 3684,
+    "semantic_clusters": 491,
+    "taxonomy_version": "1.0"
+  },
+  "spans": {
+    "by_type": {
+      "DIRECTIVE": 3057,
+      "INJECTION_PAYLOAD": 2396
+    },
+    "count_per_record": {
+      "count": 3684,
+      "max": 2,
+      "mean": 1.480185,
+      "median": 2.0,
+      "min": 0,
+      "p95": 2
+    },
+    "length_characters": {
+      "count": 5453,
+      "max": 593,
+      "mean": 160.904456,
+      "median": 148.0,
+      "min": 17,
+      "p95": 306
+    },
+    "records_with_spans": {
+      "count": 3345,
+      "rate": 0.90798
+    },
+    "total": 5453
+  },
+  "statistics_schema_version": "0.1",
+  "total_records": 3684,
+  "unknown_or_undetermined": {
+    "annotations.authority_status": {
+      "UNDETERMINED": 0,
+      "UNDETERMINED_rate": 0.0,
+      "UNKNOWN": 1288,
+      "UNKNOWN_rate": 0.34962,
+      "combined": {
+        "count": 1288,
+        "rate": 0.34962
+      }
+    },
+    "annotations.instruction_addressee": {
+      "UNDETERMINED": 0,
+      "UNDETERMINED_rate": 0.0,
+      "UNKNOWN": 339,
+      "UNKNOWN_rate": 0.09202,
+      "combined": {
+        "count": 339,
+        "rate": 0.09202
+      }
+    },
+    "annotations.instruction_presence": {
+      "UNDETERMINED": 339,
+      "UNDETERMINED_rate": 0.09202,
+      "UNKNOWN": 0,
+      "UNKNOWN_rate": 0.0,
+      "combined": {
+        "count": 339,
+        "rate": 0.09202
+      }
+    },
+    "annotations.instruction_presentation": {
+      "UNDETERMINED": 0,
+      "UNDETERMINED_rate": 0.0,
+      "UNKNOWN": 339,
+      "UNKNOWN_rate": 0.09202,
+      "combined": {
+        "count": 339,
+        "rate": 0.09202
+      }
+    },
+    "annotations.protected_policy_alignment": {
+      "UNDETERMINED": 3684,
+      "UNDETERMINED_rate": 1.0,
+      "UNKNOWN": 0,
+      "UNKNOWN_rate": 0.0,
+      "combined": {
+        "count": 3684,
+        "rate": 1.0
+      }
+    },
+    "annotations.user_goal_alignment": {
+      "UNDETERMINED": 1288,
+      "UNDETERMINED_rate": 0.34962,
+      "UNKNOWN": 0,
+      "UNKNOWN_rate": 0.0,
+      "combined": {
+        "count": 1288,
+        "rate": 0.34962
+      }
+    },
+    "content.content_origin": {
+      "UNDETERMINED": 0,
+      "UNDETERMINED_rate": 0.0,
+      "UNKNOWN": 178,
+      "UNKNOWN_rate": 0.048317,
+      "combined": {
+        "count": 178,
+        "rate": 0.048317
+      }
+    },
+    "content.delivery_mode": {
+      "UNDETERMINED": 0,
+      "UNDETERMINED_rate": 0.0,
+      "UNKNOWN": 0,
+      "UNKNOWN_rate": 0.0,
+      "combined": {
+        "count": 0,
+        "rate": 0.0
+      }
+    },
+    "content.ingestion_path": {
+      "UNDETERMINED": 0,
+      "UNDETERMINED_rate": 0.0,
+      "UNKNOWN": 0,
+      "UNKNOWN_rate": 0.0,
+      "combined": {
+        "count": 0,
+        "rate": 0.0
+      }
+    },
+    "content.source_integrity": {
+      "UNDETERMINED": 0,
+      "UNDETERMINED_rate": 0.0,
+      "UNKNOWN": 1576,
+      "UNKNOWN_rate": 0.427796,
+      "combined": {
+        "count": 1576,
+        "rate": 0.427796
+      }
+    },
+    "content.source_role": {
+      "UNDETERMINED": 0,
+      "UNDETERMINED_rate": 0.0,
+      "UNKNOWN": 0,
+      "UNKNOWN_rate": 0.0,
+      "combined": {
+        "count": 0,
+        "rate": 0.0
+      }
+    }
+  }
+}

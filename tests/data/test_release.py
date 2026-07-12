@@ -2,12 +2,14 @@ from __future__ import annotations
 
 import copy
 import hashlib
+import json
 import re
 from pathlib import Path
 from typing import Any
 
 import pytest
 
+import promptsec.data.release as release_module
 from promptsec.data.hashing import sha256_json, sha256_text
 from promptsec.data.release import (
     ReleaseBuildError,
@@ -283,6 +285,141 @@ def test_verify_release_checksums_detects_tampering(tmp_path: Path) -> None:
         f"checksum mismatch for statistics.json: "
         f"{hashlib.sha256(payload.read_bytes()).hexdigest()} != {digest}"
     ]
+
+
+def test_release_keeps_payloads_local_and_publishes_only_redacted_metadata(
+    tmp_path: Path,
+) -> None:
+    secret = "Private upstream fixture text that must never enter public metadata."
+    analysis = analyze_release_records(
+        [
+            _record("private-a", secret, index=0),
+            _record("private-b", secret, index=1),
+        ],
+        _config(tmp_path),
+    )
+    license_entries = [
+        {
+            "manifest_path": "manifests/sources/bipia.json",
+            "manifest_sha256": "2" * 64,
+            "manifest": {
+                "source_id": "bipia",
+                "components": [
+                    {
+                        "scope": "benchmark/*_attack_{train,test}.json",
+                        "license_expression": "NOASSERTION",
+                        "redistribution": "unknown",
+                    }
+                ],
+            },
+        }
+    ]
+    licenses = release_module._license_inventory("promptsec-dataset-v0.1-test", license_entries)
+    sources = {
+        "schema_version": "0.1",
+        "release_id": "promptsec-dataset-v0.1-test",
+        "sources": [],
+    }
+    output = tmp_path / "release"
+
+    release_module._write_release(output, _config(tmp_path), analysis, sources, licenses)
+
+    local_payloads = {
+        "train.jsonl",
+        "validation.jsonl",
+        "test_id.jsonl",
+        "test_held_out_source.jsonl",
+        "test_held_out_family.jsonl",
+        "review_queue.jsonl",
+    }
+    public_metadata = {
+        "dataset_card.md",
+        "sources.json",
+        "licenses.json",
+        "statistics.json",
+        "deduplication_report.json",
+        "split_report.json",
+        "release_manifest.json",
+        "checksums_pipeline.txt",
+    }
+    assert local_payloads <= {path.name for path in output.iterdir()}
+    assert public_metadata <= {path.name for path in output.iterdir()}
+    assert (output / "checksums.sha256").is_file()
+    assert secret in (output / "train.jsonl").read_text(encoding="utf-8")
+
+    manifest = json.loads((output / "release_manifest.json").read_text(encoding="utf-8"))
+    payload_manifest = {entry["name"]: entry for entry in manifest["local_payloads"]}
+    assert set(payload_manifest) == local_payloads
+    assert all(
+        entry["publication_status"] == "LOCAL_ONLY_NOT_REDISTRIBUTED"
+        for entry in payload_manifest.values()
+    )
+    assert payload_manifest["train.jsonl"]["records"] == 1
+    assert (
+        payload_manifest["train.jsonl"]["sha256"]
+        == hashlib.sha256((output / "train.jsonl").read_bytes()).hexdigest()
+    )
+    assert manifest["no_model_training"] is True
+    assert manifest["publishable_metadata"]["contains_source_text"] is False
+
+    pipeline_lines = (output / "checksums_pipeline.txt").read_text(encoding="utf-8").splitlines()
+    pipeline_targets = {line.split("  ", 1)[1] for line in pipeline_lines}
+    assert pipeline_targets == public_metadata - {"checksums_pipeline.txt"}
+    assert not any(name.endswith(".jsonl") for name in pipeline_targets)
+    assert "checksums.sha256" not in pipeline_targets
+
+    full_lines = (output / "checksums.sha256").read_text(encoding="utf-8").splitlines()
+    full_targets = {line.split("  ", 1)[1] for line in full_lines}
+    assert local_payloads <= full_targets
+    assert "checksums_pipeline.txt" in full_targets
+    assert verify_release_checksums(output) == []
+    first_full_checksum = hashlib.sha256((output / "checksums.sha256").read_bytes()).hexdigest()
+
+    release_module._write_release(output, _config(tmp_path), analysis, sources, licenses)
+
+    assert (
+        hashlib.sha256((output / "checksums.sha256").read_bytes()).hexdigest()
+        == first_full_checksum
+    )
+
+    for name in public_metadata:
+        assert secret not in (output / name).read_text(encoding="utf-8")
+    deduplication_report = json.loads(
+        (output / "deduplication_report.json").read_text(encoding="utf-8")
+    )
+    serialized_deduplication = json.dumps(deduplication_report, sort_keys=True)
+    assert "original_fields" not in serialized_deduplication
+    assert "dataset_provenance" not in serialized_deduplication
+
+
+def test_license_inventory_scopes_bipia_blocker_to_dataset_payload() -> None:
+    licenses = release_module._license_inventory(
+        "fixture-release",
+        [
+            {
+                "manifest": {
+                    "source_id": "bipia",
+                    "components": [
+                        {
+                            "scope": "attack templates",
+                            "license_expression": "NOASSERTION",
+                            "redistribution": "unknown",
+                        }
+                    ],
+                }
+            }
+        ],
+    )
+
+    components = licenses["publication_components"]
+    assert components["repository_code"]["status"] == "PUBLISHABLE"
+    assert components["reports_and_metadata"] == {
+        "status": "PUBLISHABLE",
+        "contains_source_text": False,
+    }
+    assert components["dataset_payload"]["status"] == "BLOCKED_PENDING_LICENSE_REVIEW"
+    assert licenses["publication_status"] == "BLOCKED_PENDING_LICENSE_REVIEW"
+    assert licenses["publication_blockers"][0]["source_id"] == "bipia"
 
 
 def test_release_schema_requires_phase_32_quality_fields(tmp_path: Path) -> None:

@@ -28,15 +28,30 @@ data/*
 !data/README.md
 !data/releases/
 data/releases/*
-!data/releases/promptsec-dataset-v0.1/
-!data/releases/promptsec-dataset-v0.1/**
+!data/releases/*/
+data/releases/*/*
+
+# Publishable release metadata only. JSONL payloads, review queues, and the full
+# local checksum manifest remain ignored for every release version.
+!data/releases/*/dataset_card.md
+!data/releases/*/sources.json
+!data/releases/*/licenses.json
+!data/releases/*/statistics.json
+!data/releases/*/deduplication_report.json
+!data/releases/*/split_report.json
+!data/releases/*/release_manifest.json
+!data/releases/*/checksums_pipeline.txt
+data/releases/**/*.jsonl
+data/releases/**/checksums.sha256
 reports/*
 !reports/.gitkeep
 !reports/README.md
 !reports/data_statistics/
 reports/data_statistics/*
-!reports/data_statistics/dataset_v0.1.json
-!reports/data_statistics/dataset_v0.1.md
-!reports/label_mapping/
-reports/label_mapping/*
-!reports/label_mapping/review_queue_v0.1.jsonl
+!reports/data_statistics/*.json
+!reports/data_statistics/*.md
+!reports/source_integration/
+!reports/source_integration/*.md
+
+# Review queues contain source-derived text and are reconstructed locally.
+reports/label_mapping/**

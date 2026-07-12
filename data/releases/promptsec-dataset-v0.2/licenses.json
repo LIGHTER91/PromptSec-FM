@@ -1,0 +1,357 @@
+{
+  "notice": "License obligations remain component-specific; NOASSERTION and conditional entries require release-time review.",
+  "publication_blockers": [
+    {
+      "license_expression": "NOASSERTION",
+      "reason": "Redistribution permission is unresolved in the source manifest.",
+      "redistribution": "unknown",
+      "scope": "task PROMPT and GOAL definitions plus suite environment YAML",
+      "source_id": "agentdojo"
+    },
+    {
+      "license_expression": "NOASSERTION",
+      "reason": "Redistribution permission is unresolved in the source manifest.",
+      "redistribution": "unknown",
+      "scope": "benchmark/*_attack_{train,test}.json",
+      "source_id": "bipia"
+    },
+    {
+      "license_expression": "NOASSERTION",
+      "reason": "Redistribution permission is unresolved in the source manifest.",
+      "redistribution": "unknown",
+      "scope": "user, attacker, and synthesized test-case files consumed by the importer",
+      "source_id": "injecagent"
+    }
+  ],
+  "publication_components": {
+    "dataset_payload": {
+      "contains_source_text": true,
+      "distribution": "LOCAL_REBUILD_ONLY",
+      "status": "BLOCKED_PENDING_LICENSE_REVIEW"
+    },
+    "reports_and_metadata": {
+      "contains_source_text": false,
+      "status": "PUBLISHABLE"
+    },
+    "repository_code": {
+      "license": "PROJECT_LICENSE",
+      "status": "PUBLISHABLE"
+    }
+  },
+  "publication_scope": "dataset_payload",
+  "publication_status": "BLOCKED_PENDING_LICENSE_REVIEW",
+  "release_id": "promptsec-dataset-v0.2",
+  "schema_version": "0.1",
+  "sources": [
+    {
+      "manifest": {
+        "$schema": "../../schemas/source-license-manifest-v0.1.schema.json",
+        "acquisition": {
+          "benchmark_version": "v1.2.2",
+          "cache_path": "data/raw/agentdojo/a75aba7631d3ca5fb7ab938965c97ead2f9ff84b",
+          "license_file": "LICENSE",
+          "method": "python_package_snapshot",
+          "package_name": "agentdojo",
+          "package_version": "0.1.35",
+          "resolved_revision": "a75aba7631d3ca5fb7ab938965c97ead2f9ff84b",
+          "snapshot_sha256": "2edb1a68f94ed3a24323c4f7b9e94797a6856f8083e7d4b0faf9daec7e955fc9",
+          "used_files": [
+            "agentdojo/task_suite/__init__.py",
+            "agentdojo/task_suite/load_suites.py",
+            "agentdojo/task_suite/task_suite.py",
+            "agentdojo/base_tasks.py",
+            "agentdojo/default_suites/"
+          ]
+        },
+        "citations": [
+          "Debenedetti et al. (2024). AgentDojo: A Dynamic Environment to Evaluate Prompt Injection Attacks and Defenses for LLM Agents. NeurIPS 2024 Datasets and Benchmarks Track."
+        ],
+        "components": [
+          {
+            "license_expression": "MIT",
+            "license_url": "https://github.com/ethz-spylab/agentdojo/blob/a75aba7631d3ca5fb7ab938965c97ead2f9ff84b/LICENSE",
+            "notes": "The root license and package classifier identify the repository software as MIT; retain the copyright and permission notice.",
+            "redistribution": "allowed",
+            "scope": "AgentDojo repository code and agentdojo 0.1.35 wheel"
+          },
+          {
+            "license_expression": "NOASSERTION",
+            "license_url": "https://github.com/ethz-spylab/agentdojo/blob/a75aba7631d3ca5fb7ab938965c97ead2f9ff84b/LICENSE",
+            "notes": "No separate data-license declaration or third-party data notice was found at the pin; repository-level MIT licensing is not treated as a conclusive data-rights determination for a derived dataset.",
+            "redistribution": "unknown",
+            "scope": "task PROMPT and GOAL definitions plus suite environment YAML"
+          },
+          {
+            "license_expression": "NOASSERTION",
+            "license_url": "https://github.com/ethz-spylab/agentdojo/tree/a75aba7631d3ca5fb7ab938965c97ead2f9ff84b/src/agentdojo/default_suites",
+            "notes": "The snapshot and records reproduce task text and remain local reconstruction artifacts pending an explicit data-rights review.",
+            "redistribution": "not-redistributed",
+            "scope": "PromptSec-FM AgentDojo definition snapshot and derived dataset records"
+          },
+          {
+            "license_expression": "NOASSERTION",
+            "license_url": "https://github.com/ethz-spylab/agentdojo/tree/a75aba7631d3ca5fb7ab938965c97ead2f9ff84b/runs",
+            "notes": "Runtime results are not downloaded, inspected by the importer, included in snapshots, or represented as scientific ground truth.",
+            "redistribution": "not-redistributed",
+            "scope": "runs/ model-output archives"
+          }
+        ],
+        "constraints": [
+          "Pin package 0.1.35, benchmark v1.2.2, and Git revision a75aba7631d3ca5fb7ab938965c97ead2f9ff84b together.",
+          "Generate the local snapshot only through the public get_suites API without executing attacks, tools, defenses, benchmarks, or model calls.",
+          "Do not redistribute task text, suite states, snapshots, or derived JSONL payloads until data rights are reviewed.",
+          "Do not acquire or import the runs directory or any model-output archive.",
+          "Preserve source task identifiers and describe security_case_id as a PromptSec-FM identifier derived from the upstream task pair."
+        ],
+        "license_status": "unclear",
+        "schema_version": "0.1",
+        "source_id": "agentdojo",
+        "upstream": {
+          "homepage": "https://agentdojo.spylab.ai/",
+          "repository": "https://github.com/ethz-spylab/agentdojo.git",
+          "revision": "package:0.1.35; git:a75aba7631d3ca5fb7ab938965c97ead2f9ff84b; benchmark:v1.2.2"
+        },
+        "verified_at": "2026-07-11"
+      },
+      "manifest_path": "manifests/sources/agentdojo.json",
+      "manifest_sha256": "7fad3368cf6b5ca0b7c8c85c9a5b6263c227afa329cca5e069999d20e82f7fc2"
+    },
+    {
+      "manifest": {
+        "$schema": "../../schemas/source-license-manifest-v0.1.schema.json",
+        "citations": [
+          "Yi et al. (2023). Benchmarking and Defending Against Indirect Prompt Injection Attacks on Large Language Models."
+        ],
+        "components": [
+          {
+            "license_expression": "MIT",
+            "license_url": "https://github.com/microsoft/BIPIA/blob/a004b69ec0dd446e0afd461d98cb5e96e120a5d0/LICENSE",
+            "notes": "The repository license explicitly excludes the dataset components listed below.",
+            "redistribution": "allowed",
+            "scope": "repository software outside dataset exceptions"
+          },
+          {
+            "license_expression": "CC-BY-SA-4.0",
+            "license_url": "https://github.com/ppasupat/WikiTableQuestions/blob/master/LICENSE",
+            "notes": "Attribution and ShareAlike obligations apply.",
+            "redistribution": "conditional",
+            "scope": "benchmark/table (WikiTableQuestions)"
+          },
+          {
+            "license_expression": "CC-BY-SA-4.0",
+            "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+            "notes": "Keep the question URLs and author information present in BIPIA records.",
+            "redistribution": "conditional",
+            "scope": "benchmark/code (Stack Exchange excerpts)"
+          },
+          {
+            "license_expression": "MIT",
+            "license_url": "https://github.com/openai/evals/blob/main/LICENSE.md",
+            "notes": "Consult the upstream OpenAI Evals source before release.",
+            "redistribution": "allowed",
+            "scope": "benchmark/email (OpenAI Evals invoices)"
+          },
+          {
+            "license_expression": "NOASSERTION",
+            "license_url": "https://github.com/microsoft/BIPIA/blob/a004b69ec0dd446e0afd461d98cb5e96e120a5d0/benchmark/README.md",
+            "notes": "BIPIA requires users to acquire and generate these contexts from the original datasets.",
+            "redistribution": "not-redistributed",
+            "scope": "benchmark/qa (NewsQA) and benchmark/abstract (XSum)"
+          },
+          {
+            "license_expression": "NOASSERTION",
+            "license_url": "https://github.com/microsoft/BIPIA/blob/a004b69ec0dd446e0afd461d98cb5e96e120a5d0/LICENSE",
+            "notes": "The LICENSE does not classify project-authored attack JSON separately; verify before a redistributed release.",
+            "redistribution": "unknown",
+            "scope": "benchmark/*_attack_{train,test}.json"
+          }
+        ],
+        "constraints": [
+          "Do not represent BIPIA benchmark data as globally MIT licensed.",
+          "Do not fetch or redistribute NewsQA or XSum contexts through this pipeline.",
+          "Retain record-level URLs and authors for Stack Exchange-derived code contexts.",
+          "Perform a release-time license review of attack JSON redistribution."
+        ],
+        "license_status": "multiple",
+        "schema_version": "0.1",
+        "source_id": "bipia",
+        "upstream": {
+          "homepage": "https://github.com/microsoft/BIPIA",
+          "repository": "https://github.com/microsoft/BIPIA.git",
+          "revision": "a004b69ec0dd446e0afd461d98cb5e96e120a5d0"
+        },
+        "verified_at": "2026-07-11"
+      },
+      "manifest_path": "manifests/sources/bipia.json",
+      "manifest_sha256": "f1f152e2aa8213fe9f48334a7b23853ea0fc410639b70cbfd114acf6d43815a8"
+    },
+    {
+      "manifest": {
+        "$schema": "../../schemas/source-license-manifest-v0.1.schema.json",
+        "acquisition": {
+          "cache_path": "data/raw/injecagent/f19c9f2c79a41046eb13c03c51a24c567a8ffa07",
+          "license_file": "LICENCE",
+          "method": "pinned_raw_files",
+          "resolved_revision": "f19c9f2c79a41046eb13c03c51a24c567a8ffa07",
+          "used_files": [
+            "data/user_cases.jsonl",
+            "data/attacker_cases_dh.jsonl",
+            "data/attacker_cases_ds.jsonl",
+            "data/test_cases_dh_base.json",
+            "data/test_cases_dh_enhanced.json",
+            "data/test_cases_ds_base.json",
+            "data/test_cases_ds_enhanced.json"
+          ]
+        },
+        "citations": [
+          "InjecAgent: Benchmarking Indirect Prompt Injections in Tool-Integrated Large Language Model Agents. arXiv:2403.02691."
+        ],
+        "components": [
+          {
+            "license_expression": "MIT",
+            "license_url": "https://github.com/uiuc-kang-lab/InjecAgent/blob/f19c9f2c79a41046eb13c03c51a24c567a8ffa07/LICENCE",
+            "notes": "The pinned repository contains an MIT LICENCE file attributed to Qiusi Zhan.",
+            "redistribution": "allowed",
+            "scope": "repository software and documentation"
+          },
+          {
+            "license_expression": "NOASSERTION",
+            "license_url": "https://github.com/uiuc-kang-lab/InjecAgent/tree/f19c9f2c79a41046eb13c03c51a24c567a8ffa07/data",
+            "notes": "The repository does not declare separate data terms or transitive data provenance; retrieve pinned raw files into the ignored local cache and review before redistribution.",
+            "redistribution": "unknown",
+            "scope": "user, attacker, and synthesized test-case files consumed by the importer"
+          },
+          {
+            "license_expression": "NOASSERTION",
+            "license_url": "https://github.com/uiuc-kang-lab/InjecAgent/blob/f19c9f2c79a41046eb13c03c51a24c567a8ffa07/README.md",
+            "notes": "These artifacts are unnecessary for static import and are deliberately excluded.",
+            "redistribution": "not-redistributed",
+            "scope": "tools.json, attacker_simulated_responses.json, and externally hosted model outputs"
+          }
+        ],
+        "constraints": [
+          "Do not treat the repository MIT license as an explicit transitive data-license grant.",
+          "Keep imported records and generated dataset payloads local until data redistribution is reviewed.",
+          "Do not download model-output archives or execute the benchmark during dataset construction.",
+          "Preserve the pinned revision, per-file checksums, source fields, and source-derived label status."
+        ],
+        "license_status": "unclear",
+        "schema_version": "0.1",
+        "source_id": "injecagent",
+        "upstream": {
+          "homepage": "https://github.com/uiuc-kang-lab/InjecAgent",
+          "repository": "https://github.com/uiuc-kang-lab/InjecAgent.git",
+          "revision": "f19c9f2c79a41046eb13c03c51a24c567a8ffa07"
+        },
+        "verified_at": "2026-07-11"
+      },
+      "manifest_path": "manifests/sources/injecagent.json",
+      "manifest_sha256": "783d9d65159a62568bd6a11d54541d4f06e131d84ea91715701c32d14740d7dd"
+    },
+    {
+      "manifest": {
+        "$schema": "../../schemas/source-license-manifest-v0.1.schema.json",
+        "citations": [
+          "Li et al. (2025). PIGuard: Prompt Injection Guardrail via Mitigating Overdefense for Free. ACL 2025."
+        ],
+        "components": [
+          {
+            "license_expression": "MIT",
+            "license_url": "https://huggingface.co/datasets/leolee99/NotInject/blob/847ae76cf8fea5ed325429e569ae8cfef022d2e0/README.md",
+            "notes": "The pipeline reads the official authors' JSON mirror in the MIT-licensed PIGuard repository.",
+            "redistribution": "allowed",
+            "scope": "NotInject_one, NotInject_two, and NotInject_three (339 benign prompts)"
+          }
+        ],
+        "constraints": [
+          "Import exactly the three named NotInject subsets, each containing 113 records.",
+          "Preserve trigger-word lists and category labels as original labels.",
+          "Do not treat benign source labels as proof that no instruction is present."
+        ],
+        "license_status": "single",
+        "schema_version": "0.1",
+        "source_id": "notinject",
+        "upstream": {
+          "homepage": "https://huggingface.co/datasets/leolee99/NotInject",
+          "repository": "https://github.com/leolee99/PIGuard.git",
+          "revision": "hf:847ae76cf8fea5ed325429e569ae8cfef022d2e0; github:1b5751e88bf7475acbedfc8eda795ce060307c84"
+        },
+        "verified_at": "2026-07-11"
+      },
+      "manifest_path": "manifests/sources/notinject.json",
+      "manifest_sha256": "1202f36633634ad8bfc987a9cac73f84955ad4c4ef651904c6593efaabbde87d"
+    },
+    {
+      "manifest": {
+        "$schema": "../../schemas/source-license-manifest-v0.1.schema.json",
+        "citations": [
+          "Liu et al. (2023). Formalizing and Benchmarking Prompt Injection Attacks and Defenses. arXiv:2310.12815."
+        ],
+        "components": [
+          {
+            "license_expression": "MIT",
+            "license_url": "https://github.com/liu00222/Open-Prompt-Injection/blob/95290f7ce3794c4c52ad3fe8113db2bfcdfe89e0/LICENSE",
+            "notes": "The initial importer consumes only these repository-authored benchmark definitions.",
+            "redistribution": "allowed",
+            "scope": "benchmark harness, task configurations, and system-prompt templates"
+          },
+          {
+            "license_expression": "NOASSERTION",
+            "license_url": "https://github.com/liu00222/Open-Prompt-Injection/tree/95290f7ce3794c4c52ad3fe8113db2bfcdfe89e0/OpenPromptInjection/tasks",
+            "notes": "SST-2/GLUE, SMS Spam, HSOL, JFLEG, Gigaword, and other upstream datasets retain their own terms.",
+            "redistribution": "not-redistributed",
+            "scope": "datasets dynamically loaded by OpenPromptInjection/tasks"
+          }
+        ],
+        "constraints": [
+          "Do not ingest the unrelated guychuk/open-prompt-injection Hugging Face dataset as an official project artifact.",
+          "Do not download or redistribute downstream task datasets through the initial importer.",
+          "Review every downstream dataset license before materializing full benchmark examples."
+        ],
+        "license_status": "multiple",
+        "schema_version": "0.1",
+        "source_id": "open_prompt_injection",
+        "upstream": {
+          "homepage": "https://github.com/liu00222/Open-Prompt-Injection",
+          "repository": "https://github.com/liu00222/Open-Prompt-Injection.git",
+          "revision": "95290f7ce3794c4c52ad3fe8113db2bfcdfe89e0"
+        },
+        "verified_at": "2026-07-11"
+      },
+      "manifest_path": "manifests/sources/open_prompt_injection.json",
+      "manifest_sha256": "2348add2c1a8d5d03d28738b6c1a5a3ae58f4eae5c1684d9bcb76d7221872ba2"
+    },
+    {
+      "manifest": {
+        "$schema": "../../schemas/source-license-manifest-v0.1.schema.json",
+        "citations": [
+          "Perez, F. and Ribeiro, I. (2022). Ignore Previous Prompt: Attack Techniques for Language Models. arXiv:2211.09527."
+        ],
+        "components": [
+          {
+            "license_expression": "MIT",
+            "license_url": "https://github.com/agencyenterprise/PromptInject/blob/2928a719d5de62d3766226f1b44c51d9570bc530/LICENSE",
+            "notes": "Attack and prompt templates are distributed in the MIT-licensed repository.",
+            "redistribution": "allowed",
+            "scope": "promptinject/prompt_data.py"
+          }
+        ],
+        "constraints": [
+          "Retain the MIT copyright and permission notice in substantial redistributions.",
+          "Preserve the original template keys, labels, and placeholders during conversion."
+        ],
+        "license_status": "single",
+        "schema_version": "0.1",
+        "source_id": "promptinject",
+        "upstream": {
+          "homepage": "https://github.com/agencyenterprise/PromptInject",
+          "repository": "https://github.com/agencyenterprise/PromptInject.git",
+          "revision": "2928a719d5de62d3766226f1b44c51d9570bc530"
+        },
+        "verified_at": "2026-07-11"
+      },
+      "manifest_path": "manifests/sources/promptinject.json",
+      "manifest_sha256": "8f3cb46a22d70385bd45ac9ff7904939b6898ebd4c3ad59e9c6fadafec40668e"
+    }
+  ]
+}

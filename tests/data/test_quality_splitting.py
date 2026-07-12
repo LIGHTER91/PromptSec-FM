@@ -22,6 +22,19 @@ def _record(record_id: str, source_id: str) -> dict[str, Any]:
     }
 
 
+def _agentic_record(
+    record_id: str,
+    source_id: str,
+    *,
+    parent_group_id: str,
+) -> dict[str, Any]:
+    record = _record(record_id, source_id)
+    record["extensions"] = {
+        "agentic_source": {"parent_group_id": parent_group_id},
+    }
+    return record
+
+
 def _dedup(cluster_id: str, decision: str = "KEEP") -> dict[str, Any]:
     return {
         "semantic_cluster_id": cluster_id,
@@ -134,6 +147,63 @@ def test_notinject_uses_test_favoring_ratio_policy() -> None:
         "cluster_general": "general",
         "cluster_notinject": "notinject",
     }
+
+
+def test_agentic_sources_and_cross_source_clusters_are_provisional_and_atomic() -> None:
+    records = [
+        _agentic_record(
+            "injec-base",
+            "injecagent",
+            parent_group_id="injecagent:direct_harm:attacker-1:user-1",
+        ),
+        _agentic_record(
+            "injec-enhanced",
+            "injecagent",
+            parent_group_id="injecagent:direct_harm:attacker-1:user-1",
+        ),
+        _agentic_record(
+            "dojo-case",
+            "agentdojo",
+            parent_group_id="agentdojo:v1.2.2:workspace:user_task_0:injection_task_0",
+        ),
+        _record("legacy-near-duplicate", "promptinject"),
+        _record("ordinary", "promptinject"),
+    ]
+    dedup = {
+        "injec-base": _dedup("cluster-injec-parent"),
+        "injec-enhanced": _dedup("cluster-injec-parent"),
+        "dojo-case": _dedup("cluster-cross-source"),
+        "legacy-near-duplicate": _dedup("cluster-cross-source"),
+        "ordinary": _dedup("cluster-ordinary"),
+    }
+    families = {
+        "injec-base": _family("injecagent_direct_harm_attacker_1"),
+        "injec-enhanced": _family("injecagent_direct_harm_attacker_1"),
+        "dojo-case": _family("agentdojo_workspace_injection_task_0"),
+        "legacy-near-duplicate": _family("override_previous_instructions"),
+        "ordinary": _family("ordinary"),
+    }
+    config = SplitConfig(
+        seed=33,
+        agentic_sources=frozenset({"injecagent", "agentdojo"}),
+        general_ratios={"train": 1.0, "validation": 0.0, "test_id": 0.0},
+        notinject_ratios={"train": 0.0, "validation": 0.0, "test_id": 1.0},
+    )
+
+    result = assign_splits(records, dedup, families, config)
+
+    assert set(result.splits["test_agentic_provisional"]) == {
+        "dojo-case",
+        "injec-base",
+        "injec-enhanced",
+        "legacy-near-duplicate",
+    }
+    assert result.assignments["ordinary"] == "train"
+    constraints = result.report["constraints"]
+    assert constraints["no_cluster_leakage"] is True
+    assert constraints["no_agentic_source_outside_provisional"] is True
+    assert constraints["no_agentic_parent_group_leakage"] is True
+    assert constraints["all_satisfied"] is True
 
 
 def test_hash_assignment_is_deterministic_and_input_order_independent() -> None:

@@ -8,7 +8,6 @@ token-bigram, and character-trigram Jaccard similarities.
 
 from __future__ import annotations
 
-import copy
 import re
 import unicodedata
 from collections import Counter, defaultdict
@@ -253,6 +252,49 @@ def _provenance(record: Mapping[str, Any]) -> Mapping[str, Any]:
     return provenance if isinstance(provenance, Mapping) else {}
 
 
+def _public_duplicate_member(record_id: str, record: Mapping[str, Any]) -> dict[str, Any]:
+    """Return provenance identifiers that are safe for a public deduplication report.
+
+    The canonical records and local review queues retain the complete source object.  A
+    report committed as release metadata must not repeat source text or ``original_fields``;
+    identifiers and cryptographic checksums are sufficient to audit the duplicate decision
+    against a locally reconstructed payload.
+    """
+
+    provenance = _provenance(record)
+    source_dataset = provenance.get("source_dataset")
+    source_dataset = source_dataset if isinstance(source_dataset, Mapping) else {}
+    source_record = provenance.get("source_record")
+    source_record = source_record if isinstance(source_record, Mapping) else {}
+    provenance_checksums = provenance.get("checksums")
+    provenance_checksums = provenance_checksums if isinstance(provenance_checksums, Mapping) else {}
+
+    checksums = {
+        key: value
+        for key, value in (
+            ("raw_record_sha256", source_record.get("raw_record_sha256")),
+            ("source_text_sha256", provenance_checksums.get("source_text_sha256")),
+            ("canonical_text_sha256", provenance_checksums.get("canonical_text_sha256")),
+        )
+        if isinstance(value, str) and value
+    }
+    source_id = source_dataset.get("id")
+    revision = source_dataset.get("revision")
+    upstream_record_id = source_record.get("id")
+    return {
+        "id": record_id,
+        "source": _source_name(record),
+        "source_id": source_id if isinstance(source_id, str) and source_id else "UNKNOWN",
+        "revision": revision if isinstance(revision, str) and revision else None,
+        "source_record_id": (
+            upstream_record_id
+            if isinstance(upstream_record_id, str) and upstream_record_id
+            else None
+        ),
+        "checksums": checksums,
+    }
+
+
 def _size_distribution(groups: Iterable[Sequence[Any]]) -> dict[str, int]:
     counts = Counter(len(group) for group in groups)
     return {str(size): counts[size] for size in sorted(counts)}
@@ -339,24 +381,16 @@ def analyze_duplicates(
         )
         assignment_method = "SOURCE_TEMPLATE_GROUP" if source_group_key else ""
 
-        if source_group_key and cluster is None:
-            cluster = _SemanticCluster(
-                cluster_id=_cluster_id(representative_id),
-                representative_id=representative_id,
-                representative=item,
-                exact_representative_ids=[],
-            )
-            semantic_clusters.append(cluster)
-            source_group_cluster[source_group_key] = cluster
-            similarity = 1.0
-
-        if cluster is None and not source_group_key:
+        # The first member of a structured source group still participates in lexical
+        # matching, allowing equivalent instructions from different datasets to merge.
+        # Later members are then bound to that selected cluster regardless of wording.
+        if cluster is None:
             cluster = normalized_cluster.get(item.normalized_hash)
             similarity = 1.0 if cluster is not None else -1.0
-            if cluster is not None:
+            if cluster is not None and not source_group_key:
                 assignment_method = "LEXICAL_SIMILARITY"
 
-        if cluster is None and not source_group_key:
+        if cluster is None:
             best_cluster: _SemanticCluster | None = None
             best_similarity = -1.0
             for candidate in semantic_clusters:
@@ -369,7 +403,8 @@ def analyze_duplicates(
             if best_cluster is not None and best_similarity >= config.semantic_threshold:
                 cluster = best_cluster
                 similarity = best_similarity
-                assignment_method = "LEXICAL_SIMILARITY"
+                if not source_group_key:
+                    assignment_method = "LEXICAL_SIMILARITY"
 
         if cluster is None:
             cluster = _SemanticCluster(
@@ -380,7 +415,11 @@ def analyze_duplicates(
             )
             semantic_clusters.append(cluster)
             similarity = 1.0
-            assignment_method = "LEXICAL_REPRESENTATIVE"
+            if not source_group_key:
+                assignment_method = "LEXICAL_REPRESENTATIVE"
+
+        if source_group_key:
+            source_group_cluster.setdefault(source_group_key, cluster)
 
         cluster.exact_representative_ids.append(representative_id)
         normalized_cluster.setdefault(item.normalized_hash, cluster)
@@ -447,14 +486,7 @@ def analyze_duplicates(
                 "duplicate_ids": members[1:],
                 "sources": sorted({_source_name(prepared[item].record) for item in members}),
                 "members": [
-                    {
-                        "id": item,
-                        "source": _source_name(prepared[item].record),
-                        "dataset_provenance": copy.deepcopy(
-                            dict(_provenance(prepared[item].record))
-                        ),
-                    }
-                    for item in members
+                    _public_duplicate_member(item, prepared[item].record) for item in members
                 ],
             }
         )
@@ -462,6 +494,7 @@ def analyze_duplicates(
     semantic_clusters_report: list[dict[str, Any]] = []
     for cluster in sorted(semantic_clusters, key=lambda item: item.cluster_id):
         members = sorted(semantic_members[cluster.cluster_id])
+        sources = sorted({_source_name(prepared[item].record) for item in members})
         scores = semantic_similarities[cluster.cluster_id]
         decisions = Counter(assignments[item]["dedup_decision"] for item in members)
         semantic_clusters_report.append(
@@ -469,6 +502,7 @@ def analyze_duplicates(
                 "semantic_cluster_id": cluster.cluster_id,
                 "representative_id": cluster.representative_id,
                 "member_ids": members,
+                "sources": sources,
                 "size": len(members),
                 "minimum_similarity_to_representative": round(min(scores), 6),
                 "source_template_group_keys": sorted(
@@ -481,6 +515,17 @@ def analyze_duplicates(
                 "decisions": {decision: decisions.get(decision, 0) for decision in _DECISIONS},
             }
         )
+
+    cross_source_semantic_clusters = [
+        {
+            "semantic_cluster_id": cluster["semantic_cluster_id"],
+            "sources": cluster["sources"],
+            "member_ids": cluster["member_ids"],
+            "size": cluster["size"],
+        }
+        for cluster in semantic_clusters_report
+        if len(cluster["sources"]) > 1
+    ]
 
     decision_counts = Counter(item["dedup_decision"] for item in assignments.values())
     exact_group_members = list(exact_groups.values())
@@ -536,6 +581,7 @@ def analyze_duplicates(
             "dropped_exact_duplicates": decision_counts.get("DROP_EXACT_DUPLICATE", 0),
             "exact_duplicate_groups": len(duplicate_groups_report),
             "semantic_clusters": len(semantic_clusters),
+            "cross_source_semantic_clusters": len(cross_source_semantic_clusters),
         },
         "distributions": {
             "dedup_decisions": {
@@ -543,8 +589,12 @@ def analyze_duplicates(
             },
             "exact_group_sizes": _size_distribution(exact_group_members),
             "semantic_cluster_sizes": _size_distribution(semantic_group_members),
+            "cross_source_semantic_cluster_sizes": _size_distribution(
+                [cluster["member_ids"] for cluster in cross_source_semantic_clusters]
+            ),
         },
         "exact_duplicate_groups": duplicate_groups_report,
         "semantic_clusters": semantic_clusters_report,
+        "cross_source_semantic_clusters": cross_source_semantic_clusters,
     }
     return DedupResult(assignments=assignments, kept_ids=kept_ids, report=report)

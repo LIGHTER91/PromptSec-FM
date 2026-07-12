@@ -45,6 +45,19 @@ class ScenarioDefaults:
 
 
 @dataclass(frozen=True, slots=True)
+class AcquisitionConfig:
+    method: str
+    cache_path: str
+    license_file: str | None
+    used_files: tuple[str, ...]
+    package_name: str | None = None
+    package_version: str | None = None
+    benchmark_version: str | None = None
+    snapshot_filename: str | None = None
+    snapshot_sha256: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
 class ArtifactConfig:
     id: str
     split: str
@@ -53,6 +66,7 @@ class ArtifactConfig:
     sha256: str | None = None
     records_path: str | None = None
     encoding: str = "utf-8"
+    local_path: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -74,6 +88,7 @@ class SourceConfig:
     revision: str | None
     license_manifest: str
     importer: str
+    acquisition: AcquisitionConfig
     scenario: ScenarioDefaults
     fields: FieldConfig
     artifacts: tuple[ArtifactConfig, ...]
@@ -98,10 +113,13 @@ class SourceConfig:
         scenario_raw = _required(raw, "scenario", "config")
         fields_raw = _required(raw, "fields", "config")
         artifacts_raw = _required(raw, "artifacts", "config")
+        acquisition_raw = raw.get("acquisition", {})
         if not isinstance(source, dict) or not isinstance(scenario_raw, dict):
             raise ConfigError("source and scenario must be TOML tables")
         if not isinstance(fields_raw, dict) or not isinstance(artifacts_raw, list):
             raise ConfigError("fields must be a table and artifacts must be an array of tables")
+        if not isinstance(acquisition_raw, dict):
+            raise ConfigError("acquisition must be a TOML table")
 
         scenario = ScenarioDefaults(
             **{
@@ -145,23 +163,79 @@ class SourceConfig:
                     sha256=digest.lower() if digest else None,
                     records_path=str(item["records_path"]) if item.get("records_path") else None,
                     encoding=str(item.get("encoding", "utf-8")),
+                    local_path=str(item["local_path"]) if item.get("local_path") else None,
                 )
             )
             seen_ids.add(artifact_id)
         if not artifacts:
             raise ConfigError("config must declare at least one artifact")
 
+        used_files_value = acquisition_raw.get("used_files", [])
+        if not isinstance(used_files_value, list) or not all(
+            isinstance(item, str) and item for item in used_files_value
+        ):
+            raise ConfigError("acquisition.used_files must be a string array")
+        snapshot_sha256 = acquisition_raw.get("snapshot_sha256") or None
+        if snapshot_sha256 is not None and (
+            not isinstance(snapshot_sha256, str)
+            or len(snapshot_sha256) != 64
+            or any(char not in "0123456789abcdefABCDEF" for char in snapshot_sha256)
+        ):
+            raise ConfigError(
+                "acquisition.snapshot_sha256 must be a 64-character hexadecimal digest"
+            )
+        source_id = str(_required(source, "id", "source"))
+        source_revision = str(source["revision"]) if source.get("revision") is not None else None
+        source_version = str(source["version"]) if source.get("version") is not None else None
+        acquisition = AcquisitionConfig(
+            method=str(acquisition_raw.get("method", "http_artifacts")),
+            cache_path=str(
+                acquisition_raw.get(
+                    "cache_path",
+                    f"data/raw/{source_id}/{source_revision or source_version or 'unversioned'}",
+                )
+            ),
+            license_file=(
+                str(acquisition_raw["license_file"])
+                if acquisition_raw.get("license_file")
+                else None
+            ),
+            used_files=tuple(used_files_value),
+            package_name=(
+                str(acquisition_raw["package_name"])
+                if acquisition_raw.get("package_name")
+                else None
+            ),
+            package_version=(
+                str(acquisition_raw["package_version"])
+                if acquisition_raw.get("package_version")
+                else None
+            ),
+            benchmark_version=(
+                str(acquisition_raw["benchmark_version"])
+                if acquisition_raw.get("benchmark_version")
+                else None
+            ),
+            snapshot_filename=(
+                str(acquisition_raw["snapshot_filename"])
+                if acquisition_raw.get("snapshot_filename")
+                else None
+            ),
+            snapshot_sha256=(snapshot_sha256.lower() if snapshot_sha256 else None),
+        )
+
         return cls(
             path=config_path.resolve(),
             schema_version=schema_version,
-            id=str(_required(source, "id", "source")),
+            id=source_id,
             name=str(_required(source, "name", "source")),
             homepage=str(_required(source, "homepage", "source")),
             repository=str(_required(source, "repository", "source")),
-            version=str(source["version"]) if source.get("version") is not None else None,
-            revision=str(source["revision"]) if source.get("revision") is not None else None,
+            version=source_version,
+            revision=source_revision,
             license_manifest=str(_required(source, "license_manifest", "source")),
             importer=str(_required(source, "importer", "source")),
+            acquisition=acquisition,
             scenario=scenario,
             fields=fields,
             artifacts=tuple(artifacts),

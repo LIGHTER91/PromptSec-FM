@@ -1,13 +1,13 @@
 # Generated reports
 
-Ad hoc build and validation reports written here are ignored by Git. The Phase 3.2
-statistics and label-review queue are tracked at:
+Ad hoc build and validation reports written here are ignored by Git. Aggregate Phase 3.2
+statistics are tracked at:
 
 ```text
 reports/data_statistics/dataset_v0.1.{json,md}
-reports/label_mapping/review_queue_v0.1.jsonl
 ```
 
-These reports describe the full imported corpus before exact-duplicate removal. The
-release-local reports under `data/releases/promptsec-dataset-v0.1/` additionally
-record deduplication decisions, split assignments, licenses, and checksums.
+Label-review queues under `reports/label_mapping/` contain source-derived text and always
+remain local and ignored. Aggregate reports describe the full imported corpus before
+exact-duplicate removal. Release-local public reports additionally record redacted
+deduplication decisions, split assignments, licenses, and metadata-only checksums.

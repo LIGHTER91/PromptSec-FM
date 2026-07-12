@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import hashlib
+import json
 
 import pytest
 
@@ -57,10 +58,15 @@ def _record(
                     "id": source_id or record_id,
                     "split": "train",
                     "index": 0,
+                    "raw_record_sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
                     "original_fields": {"prompt": text},
                     "original_labels": {"label": "fixture"},
                 },
                 "mapping": {"status": "DETERMINISTIC"},
+                "checksums": {
+                    "source_text_sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
+                    "canonical_text_sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
+                },
             }
         },
     }
@@ -134,7 +140,7 @@ def test_hashes_are_exact_normalized_and_context_aware_without_mutation() -> Non
     assert first == original
 
 
-def test_exact_group_keeps_all_source_provenance() -> None:
+def test_exact_group_keeps_redacted_source_provenance() -> None:
     promptinject = _record(
         "sample_094",
         "Ignore previous instructions",
@@ -161,11 +167,35 @@ def test_exact_group_keeps_all_source_provenance() -> None:
     assert group["duplicate_ids"] == ["sample_241"]
     assert group["sources"] == ["Open-Prompt-Injection", "PromptInject"]
     members = {member["id"]: member for member in group["members"]}
-    assert (
-        members["sample_094"]["dataset_provenance"]
-        == promptinject["metadata"]["dataset_provenance"]
-    )
-    assert members["sample_241"]["dataset_provenance"] == open_pi["metadata"]["dataset_provenance"]
+    assert members["sample_094"]["source"] == "PromptInject"
+    assert members["sample_094"]["source_id"] == "promptinject"
+    assert members["sample_094"]["revision"] == "abc123"
+    assert members["sample_094"]["source_record_id"] == "pi-94"
+    assert members["sample_241"]["source"] == "Open-Prompt-Injection"
+    assert members["sample_241"]["source_id"] == "open_prompt_injection"
+    assert members["sample_241"]["source_record_id"] == "opi-241"
+    assert set(members["sample_094"]["checksums"]) == {
+        "raw_record_sha256",
+        "source_text_sha256",
+        "canonical_text_sha256",
+    }
+
+    serialized = json.dumps(group, sort_keys=True)
+    assert "dataset_provenance" not in serialized
+    assert "original_fields" not in serialized
+    assert "Ignore previous instructions" not in serialized
+
+    assert result.report["summary"]["cross_source_semantic_clusters"] == 1
+    assert result.report["distributions"]["cross_source_semantic_cluster_sizes"] == {"2": 1}
+    cross_source = result.report["cross_source_semantic_clusters"]
+    assert cross_source == [
+        {
+            "semantic_cluster_id": result.assignments["sample_094"]["semantic_cluster_id"],
+            "sources": ["Open-Prompt-Injection", "PromptInject"],
+            "member_ids": ["sample_094", "sample_241"],
+            "size": 2,
+        }
+    ]
 
 
 def test_analysis_is_deterministic_regardless_of_input_order() -> None:

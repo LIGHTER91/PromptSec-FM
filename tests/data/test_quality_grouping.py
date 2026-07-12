@@ -12,8 +12,9 @@ def _record(
     original_fields: dict[str, Any],
     *,
     text: str = "metadata-only grouping fixture",
+    agentic_source: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    return {
+    record = {
         "id": f"{source_id}:fixture",
         "content": {"text": text},
         "metadata": {
@@ -26,6 +27,9 @@ def _record(
             }
         },
     }
+    if agentic_source is not None:
+        record["extensions"] = {"agentic_source": agentic_source}
+    return record
 
 
 @pytest.mark.parametrize(
@@ -140,3 +144,41 @@ def test_unknown_provenance_never_falls_back_to_text_keyword_matching() -> None:
         "assignment_rule": "fallback.no_documented_source_provenance_rule",
         "requires_manual_review": True,
     }
+
+
+def test_injecagent_groups_from_attack_mode_and_attacker_case_metadata() -> None:
+    assignment = assign_group(
+        _record(
+            "injecagent",
+            {},
+            agentic_source={
+                "attack_mode": "data_stealing",
+                "attack_category": "data_stealing",
+                "attacker_case_id": "attacker-ds-4",
+            },
+        )
+    )
+
+    assert assignment["domain"] == "data_stealing"
+    assert assignment["template_family"] == "injecagent_data_stealing_attacker_ds_4"
+    assert assignment["assignment_method"] == "SOURCE_METADATA"
+    assert assignment["requires_manual_review"] is False
+
+
+def test_agentdojo_groups_from_suite_and_injection_task_without_text_keywords() -> None:
+    assignment = assign_group(
+        _record(
+            "agentdojo",
+            {},
+            text="neutral static definition",
+            agentic_source={
+                "suite_id": "workspace",
+                "injection_task_id": "injection_task_7",
+            },
+        )
+    )
+
+    assert assignment["domain"] == "workspace"
+    assert assignment["template_family"] == "agentdojo_workspace_injection_task_7"
+    assert assignment["assignment_method"] == "SOURCE_METADATA"
+    assert assignment["requires_manual_review"] is False

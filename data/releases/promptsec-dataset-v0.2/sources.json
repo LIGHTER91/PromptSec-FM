@@ -1,0 +1,342 @@
+{
+  "release_config": "configs/dataset_v0.2.yaml",
+  "release_config_sha256": "3ebb5642862edb0d614db291af11c4efea1b89f13947a595a0f058349956122d",
+  "release_id": "promptsec-dataset-v0.2",
+  "schema_version": "0.1",
+  "sources": [
+    {
+      "acquisition": {
+        "benchmark_version": "v1.2.2",
+        "cache_path": "data/raw/agentdojo/a75aba7631d3ca5fb7ab938965c97ead2f9ff84b",
+        "license_file": "LICENSE",
+        "method": "python_package_snapshot",
+        "package_name": "agentdojo",
+        "package_version": "0.1.35",
+        "snapshot_filename": "agentdojo-0.1.35-v1.2.2.snapshot.json",
+        "snapshot_sha256": "2edb1a68f94ed3a24323c4f7b9e94797a6856f8083e7d4b0faf9daec7e955fc9",
+        "used_files": [
+          "agentdojo/task_suite/__init__.py",
+          "agentdojo/task_suite/load_suites.py",
+          "agentdojo/task_suite/task_suite.py",
+          "agentdojo/base_tasks.py",
+          "agentdojo/default_suites/"
+        ]
+      },
+      "artifacts": [
+        {
+          "expected_sha256": "364bea4219716b716bf639f504d195943f7f6a5535d312ca41d7098704a2affd",
+          "format": "zip",
+          "id": "agentdojo_wheel",
+          "local_path": "data/raw/agentdojo/a75aba7631d3ca5fb7ab938965c97ead2f9ff84b/agentdojo-0.1.35-py3-none-any.whl",
+          "observed_sha256": "364bea4219716b716bf639f504d195943f7f6a5535d312ca41d7098704a2affd",
+          "records_path": null,
+          "split": "static_security_cases",
+          "url": "https://files.pythonhosted.org/packages/ca/a0/371be72fdd08bbae0c3c5cd22e6b35390f35c9cbe189d14b72e49058bd4b/agentdojo-0.1.35-py3-none-any.whl"
+        }
+      ],
+      "config": "configs/sources/agentdojo.toml",
+      "config_sha256": "a8bda6d155950ab908d75b9ed608f2135d78e435df369e1f025f43de777ac4ab",
+      "homepage": "https://agentdojo.spylab.ai/",
+      "id": "agentdojo",
+      "license_manifest": "manifests/sources/agentdojo.json",
+      "name": "AgentDojo",
+      "records": 949,
+      "repository": "https://github.com/ethz-spylab/agentdojo.git",
+      "revision": "a75aba7631d3ca5fb7ab938965c97ead2f9ff84b",
+      "version": "0.1.35"
+    },
+    {
+      "acquisition": {
+        "benchmark_version": null,
+        "cache_path": "data/raw/bipia/a004b69ec0dd446e0afd461d98cb5e96e120a5d0",
+        "license_file": null,
+        "method": "http_artifacts",
+        "package_name": null,
+        "package_version": null,
+        "snapshot_filename": null,
+        "snapshot_sha256": null,
+        "used_files": []
+      },
+      "artifacts": [
+        {
+          "expected_sha256": "63f95d3e67eac4178cdabdbdaf192cd05f2b6ed0702b578f1d30d556e5155670",
+          "format": "json",
+          "id": "text_attack_train",
+          "local_path": "data/raw/bipia/a004b69ec0dd446e0afd461d98cb5e96e120a5d0/text_attack_train.json",
+          "observed_sha256": "63f95d3e67eac4178cdabdbdaf192cd05f2b6ed0702b578f1d30d556e5155670",
+          "records_path": null,
+          "split": "train",
+          "url": "https://raw.githubusercontent.com/microsoft/BIPIA/a004b69ec0dd446e0afd461d98cb5e96e120a5d0/benchmark/text_attack_train.json"
+        },
+        {
+          "expected_sha256": "75750e7b4e8b34e8f9d88d89b357aeaaf02bd07f9e493ccd37eda74a0cd7c7f8",
+          "format": "json",
+          "id": "text_attack_test",
+          "local_path": "data/raw/bipia/a004b69ec0dd446e0afd461d98cb5e96e120a5d0/text_attack_test.json",
+          "observed_sha256": "75750e7b4e8b34e8f9d88d89b357aeaaf02bd07f9e493ccd37eda74a0cd7c7f8",
+          "records_path": null,
+          "split": "test",
+          "url": "https://raw.githubusercontent.com/microsoft/BIPIA/a004b69ec0dd446e0afd461d98cb5e96e120a5d0/benchmark/text_attack_test.json"
+        },
+        {
+          "expected_sha256": "fe515080b6da2b5c0b67ca7ba2a3b3c2ce57c48f45733c475ebc813cba118484",
+          "format": "json",
+          "id": "code_attack_train",
+          "local_path": "data/raw/bipia/a004b69ec0dd446e0afd461d98cb5e96e120a5d0/code_attack_train.json",
+          "observed_sha256": "fe515080b6da2b5c0b67ca7ba2a3b3c2ce57c48f45733c475ebc813cba118484",
+          "records_path": null,
+          "split": "train",
+          "url": "https://raw.githubusercontent.com/microsoft/BIPIA/a004b69ec0dd446e0afd461d98cb5e96e120a5d0/benchmark/code_attack_train.json"
+        },
+        {
+          "expected_sha256": "892545c5aaec0645b1ded65dc7816b3d70e9ef4eadcba2301a7a3db93676b6e0",
+          "format": "json",
+          "id": "code_attack_test",
+          "local_path": "data/raw/bipia/a004b69ec0dd446e0afd461d98cb5e96e120a5d0/code_attack_test.json",
+          "observed_sha256": "892545c5aaec0645b1ded65dc7816b3d70e9ef4eadcba2301a7a3db93676b6e0",
+          "records_path": null,
+          "split": "test",
+          "url": "https://raw.githubusercontent.com/microsoft/BIPIA/a004b69ec0dd446e0afd461d98cb5e96e120a5d0/benchmark/code_attack_test.json"
+        }
+      ],
+      "config": "configs/sources/bipia.toml",
+      "config_sha256": "a02c638b53035a92c8d945150fd7b35c33e79802a321137e1c0339c28774cfe7",
+      "homepage": "https://github.com/microsoft/BIPIA",
+      "id": "bipia",
+      "license_manifest": "manifests/sources/bipia.json",
+      "name": "BIPIA",
+      "records": 250,
+      "repository": "https://github.com/microsoft/BIPIA.git",
+      "revision": "a004b69ec0dd446e0afd461d98cb5e96e120a5d0",
+      "version": "paper-benchmark"
+    },
+    {
+      "acquisition": {
+        "benchmark_version": null,
+        "cache_path": "data/raw/injecagent/f19c9f2c79a41046eb13c03c51a24c567a8ffa07",
+        "license_file": "LICENCE",
+        "method": "pinned_raw_files",
+        "package_name": null,
+        "package_version": null,
+        "snapshot_filename": null,
+        "snapshot_sha256": null,
+        "used_files": [
+          "data/user_cases.jsonl",
+          "data/attacker_cases_dh.jsonl",
+          "data/attacker_cases_ds.jsonl",
+          "data/test_cases_dh_base.json",
+          "data/test_cases_dh_enhanced.json",
+          "data/test_cases_ds_base.json",
+          "data/test_cases_ds_enhanced.json"
+        ]
+      },
+      "artifacts": [
+        {
+          "expected_sha256": "c840e2b00fdce68e7142d0970220522303d67b2530d6fb36ef1112448cdd8977",
+          "format": "jsonl",
+          "id": "user_cases",
+          "local_path": "data/raw/injecagent/f19c9f2c79a41046eb13c03c51a24c567a8ffa07/user_cases.jsonl",
+          "observed_sha256": "c840e2b00fdce68e7142d0970220522303d67b2530d6fb36ef1112448cdd8977",
+          "records_path": null,
+          "split": "support_user_cases",
+          "url": "https://raw.githubusercontent.com/uiuc-kang-lab/InjecAgent/f19c9f2c79a41046eb13c03c51a24c567a8ffa07/data/user_cases.jsonl"
+        },
+        {
+          "expected_sha256": "999d52e15af3c80a3303a09430af0f3878d1f91e4c573ca7b477a91cdfa6b991",
+          "format": "jsonl",
+          "id": "attacker_cases_dh",
+          "local_path": "data/raw/injecagent/f19c9f2c79a41046eb13c03c51a24c567a8ffa07/attacker_cases_dh.jsonl",
+          "observed_sha256": "999d52e15af3c80a3303a09430af0f3878d1f91e4c573ca7b477a91cdfa6b991",
+          "records_path": null,
+          "split": "support_direct_harm_attacker_cases",
+          "url": "https://raw.githubusercontent.com/uiuc-kang-lab/InjecAgent/f19c9f2c79a41046eb13c03c51a24c567a8ffa07/data/attacker_cases_dh.jsonl"
+        },
+        {
+          "expected_sha256": "87952398c989d8ca841724e38ecdbb789676d3841e19dfc44aac7b710df9cb1f",
+          "format": "jsonl",
+          "id": "attacker_cases_ds",
+          "local_path": "data/raw/injecagent/f19c9f2c79a41046eb13c03c51a24c567a8ffa07/attacker_cases_ds.jsonl",
+          "observed_sha256": "87952398c989d8ca841724e38ecdbb789676d3841e19dfc44aac7b710df9cb1f",
+          "records_path": null,
+          "split": "support_data_stealing_attacker_cases",
+          "url": "https://raw.githubusercontent.com/uiuc-kang-lab/InjecAgent/f19c9f2c79a41046eb13c03c51a24c567a8ffa07/data/attacker_cases_ds.jsonl"
+        },
+        {
+          "expected_sha256": "0a8186468d21389af432e8c7b399ae42264d1b93a07b65c7a489468508604305",
+          "format": "json",
+          "id": "test_cases_dh_base",
+          "local_path": "data/raw/injecagent/f19c9f2c79a41046eb13c03c51a24c567a8ffa07/test_cases_dh_base.json",
+          "observed_sha256": "0a8186468d21389af432e8c7b399ae42264d1b93a07b65c7a489468508604305",
+          "records_path": null,
+          "split": "direct_harm_base",
+          "url": "https://raw.githubusercontent.com/uiuc-kang-lab/InjecAgent/f19c9f2c79a41046eb13c03c51a24c567a8ffa07/data/test_cases_dh_base.json"
+        },
+        {
+          "expected_sha256": "885602716b72c18af80695ce6c2e1f242fa03163bc90b0788b0c5e4ab6216d50",
+          "format": "json",
+          "id": "test_cases_dh_enhanced",
+          "local_path": "data/raw/injecagent/f19c9f2c79a41046eb13c03c51a24c567a8ffa07/test_cases_dh_enhanced.json",
+          "observed_sha256": "885602716b72c18af80695ce6c2e1f242fa03163bc90b0788b0c5e4ab6216d50",
+          "records_path": null,
+          "split": "direct_harm_enhanced",
+          "url": "https://raw.githubusercontent.com/uiuc-kang-lab/InjecAgent/f19c9f2c79a41046eb13c03c51a24c567a8ffa07/data/test_cases_dh_enhanced.json"
+        },
+        {
+          "expected_sha256": "4daab35c62a3845e8b9400f4dca58b9c9f37e57cd33b2337552557fbb26282e9",
+          "format": "json",
+          "id": "test_cases_ds_base",
+          "local_path": "data/raw/injecagent/f19c9f2c79a41046eb13c03c51a24c567a8ffa07/test_cases_ds_base.json",
+          "observed_sha256": "4daab35c62a3845e8b9400f4dca58b9c9f37e57cd33b2337552557fbb26282e9",
+          "records_path": null,
+          "split": "data_stealing_base",
+          "url": "https://raw.githubusercontent.com/uiuc-kang-lab/InjecAgent/f19c9f2c79a41046eb13c03c51a24c567a8ffa07/data/test_cases_ds_base.json"
+        },
+        {
+          "expected_sha256": "7bc510868df032511053fc40e8470e68a041fb7148d055112093594bf73ab0ce",
+          "format": "json",
+          "id": "test_cases_ds_enhanced",
+          "local_path": "data/raw/injecagent/f19c9f2c79a41046eb13c03c51a24c567a8ffa07/test_cases_ds_enhanced.json",
+          "observed_sha256": "7bc510868df032511053fc40e8470e68a041fb7148d055112093594bf73ab0ce",
+          "records_path": null,
+          "split": "data_stealing_enhanced",
+          "url": "https://raw.githubusercontent.com/uiuc-kang-lab/InjecAgent/f19c9f2c79a41046eb13c03c51a24c567a8ffa07/data/test_cases_ds_enhanced.json"
+        }
+      ],
+      "config": "configs/sources/injecagent.toml",
+      "config_sha256": "1ed3ec1bf801fe21e4ef0b1e8cfd5136ec978e26c1bb9e2dfbf4fa3185380756",
+      "homepage": "https://github.com/uiuc-kang-lab/InjecAgent",
+      "id": "injecagent",
+      "license_manifest": "manifests/sources/injecagent.json",
+      "name": "InjecAgent",
+      "records": 2108,
+      "repository": "https://github.com/uiuc-kang-lab/InjecAgent.git",
+      "revision": "f19c9f2c79a41046eb13c03c51a24c567a8ffa07",
+      "version": "paper-benchmark"
+    },
+    {
+      "acquisition": {
+        "benchmark_version": null,
+        "cache_path": "data/raw/notinject/1b5751e88bf7475acbedfc8eda795ce060307c84",
+        "license_file": null,
+        "method": "http_artifacts",
+        "package_name": null,
+        "package_version": null,
+        "snapshot_filename": null,
+        "snapshot_sha256": null,
+        "used_files": []
+      },
+      "artifacts": [
+        {
+          "expected_sha256": "69b535596d95102424e9c5946944feb4f2d596687eb8213f2ecad75478e5ffdd",
+          "format": "json",
+          "id": "notinject_one",
+          "local_path": "data/raw/notinject/1b5751e88bf7475acbedfc8eda795ce060307c84/NotInject_one.json",
+          "observed_sha256": "69b535596d95102424e9c5946944feb4f2d596687eb8213f2ecad75478e5ffdd",
+          "records_path": null,
+          "split": "NotInject_one",
+          "url": "https://raw.githubusercontent.com/leolee99/PIGuard/1b5751e88bf7475acbedfc8eda795ce060307c84/datasets/NotInject_one.json"
+        },
+        {
+          "expected_sha256": "6043d94e75b48d8e7682d25dc79eaf45359e1e561ce520e3b8fd5625a91060c6",
+          "format": "json",
+          "id": "notinject_two",
+          "local_path": "data/raw/notinject/1b5751e88bf7475acbedfc8eda795ce060307c84/NotInject_two.json",
+          "observed_sha256": "6043d94e75b48d8e7682d25dc79eaf45359e1e561ce520e3b8fd5625a91060c6",
+          "records_path": null,
+          "split": "NotInject_two",
+          "url": "https://raw.githubusercontent.com/leolee99/PIGuard/1b5751e88bf7475acbedfc8eda795ce060307c84/datasets/NotInject_two.json"
+        },
+        {
+          "expected_sha256": "ef01eff0d761d2e34571b3fdbcec08c30cd93efe8d0e1a2eb5c2baeb1873b070",
+          "format": "json",
+          "id": "notinject_three",
+          "local_path": "data/raw/notinject/1b5751e88bf7475acbedfc8eda795ce060307c84/NotInject_three.json",
+          "observed_sha256": "ef01eff0d761d2e34571b3fdbcec08c30cd93efe8d0e1a2eb5c2baeb1873b070",
+          "records_path": null,
+          "split": "NotInject_three",
+          "url": "https://raw.githubusercontent.com/leolee99/PIGuard/1b5751e88bf7475acbedfc8eda795ce060307c84/datasets/NotInject_three.json"
+        }
+      ],
+      "config": "configs/sources/notinject.toml",
+      "config_sha256": "01b2538b3e1fee1be89808c321195c065e06be83273891dc976a4137e3d68dc3",
+      "homepage": "https://huggingface.co/datasets/leolee99/NotInject",
+      "id": "notinject",
+      "license_manifest": "manifests/sources/notinject.json",
+      "name": "NotInject",
+      "records": 339,
+      "repository": "https://github.com/leolee99/PIGuard.git",
+      "revision": "1b5751e88bf7475acbedfc8eda795ce060307c84",
+      "version": "hf:847ae76cf8fea5ed325429e569ae8cfef022d2e0"
+    },
+    {
+      "acquisition": {
+        "benchmark_version": null,
+        "cache_path": "data/raw/open_prompt_injection/95290f7ce3794c4c52ad3fe8113db2bfcdfe89e0",
+        "license_file": null,
+        "method": "http_artifacts",
+        "package_name": null,
+        "package_version": null,
+        "snapshot_filename": null,
+        "snapshot_sha256": null,
+        "used_files": []
+      },
+      "artifacts": [
+        {
+          "expected_sha256": "c7b11e843136a40fec74a9dfd5f694031254e66131b216a2de591501ba96d50b",
+          "format": "zip",
+          "id": "source_archive",
+          "local_path": "data/raw/open_prompt_injection/95290f7ce3794c4c52ad3fe8113db2bfcdfe89e0/95290f7ce3794c4c52ad3fe8113db2bfcdfe89e0.zip",
+          "observed_sha256": "c7b11e843136a40fec74a9dfd5f694031254e66131b216a2de591501ba96d50b",
+          "records_path": null,
+          "split": "benchmark_definitions",
+          "url": "https://github.com/liu00222/Open-Prompt-Injection/archive/95290f7ce3794c4c52ad3fe8113db2bfcdfe89e0.zip"
+        }
+      ],
+      "config": "configs/sources/open_prompt_injection.toml",
+      "config_sha256": "07705f878d47764f3b41f3227b6ede82516a425d33d7a4e412f93d1a72c38ff6",
+      "homepage": "https://github.com/liu00222/Open-Prompt-Injection",
+      "id": "open_prompt_injection",
+      "license_manifest": "manifests/sources/open_prompt_injection.json",
+      "name": "Open-Prompt-Injection",
+      "records": 28,
+      "repository": "https://github.com/liu00222/Open-Prompt-Injection.git",
+      "revision": "95290f7ce3794c4c52ad3fe8113db2bfcdfe89e0",
+      "version": "paper-benchmark"
+    },
+    {
+      "acquisition": {
+        "benchmark_version": null,
+        "cache_path": "data/raw/promptinject/2928a719d5de62d3766226f1b44c51d9570bc530",
+        "license_file": null,
+        "method": "http_artifacts",
+        "package_name": null,
+        "package_version": null,
+        "snapshot_filename": null,
+        "snapshot_sha256": null,
+        "used_files": []
+      },
+      "artifacts": [
+        {
+          "expected_sha256": "d26af509698c5f88e611a163cc162ab903d41040cc6307db9f6ee4b6195a5b6e",
+          "format": "python",
+          "id": "prompt_data",
+          "local_path": "data/raw/promptinject/2928a719d5de62d3766226f1b44c51d9570bc530/prompt_data.py",
+          "observed_sha256": "d26af509698c5f88e611a163cc162ab903d41040cc6307db9f6ee4b6195a5b6e",
+          "records_path": null,
+          "split": "unsplit",
+          "url": "https://raw.githubusercontent.com/agencyenterprise/PromptInject/2928a719d5de62d3766226f1b44c51d9570bc530/promptinject/prompt_data.py"
+        }
+      ],
+      "config": "configs/sources/promptinject.toml",
+      "config_sha256": "a8fb4e360ec7c46169f0946db6425e45771958b6e5b70bc30ad55b65ea9a6f22",
+      "homepage": "https://github.com/agencyenterprise/PromptInject",
+      "id": "promptinject",
+      "license_manifest": "manifests/sources/promptinject.json",
+      "name": "PromptInject",
+      "records": 10,
+      "repository": "https://github.com/agencyenterprise/PromptInject.git",
+      "revision": "2928a719d5de62d3766226f1b44c51d9570bc530",
+      "version": "2022-paper-artifacts"
+    }
+  ]
+}

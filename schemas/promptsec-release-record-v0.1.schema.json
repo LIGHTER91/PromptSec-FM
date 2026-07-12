@@ -212,6 +212,7 @@
             "test_id",
             "test_held_out_source",
             "test_held_out_family",
+            "test_agentic_provisional",
             "DROPPED_EXACT"
           ]
         }

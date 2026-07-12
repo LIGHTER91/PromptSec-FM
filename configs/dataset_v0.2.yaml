@@ -1,0 +1,87 @@
+schema_version: "0.2"
+project_root: ".."
+
+dataset:
+  id: promptsec-dataset-v0.2
+  title: PromptSec-Dataset v0.2
+  taxonomy_version: "1.0"
+  record_schema_version: "0.1"
+  imported_at: "2026-07-11T00:00:00Z"
+  seed: 3202
+
+paths:
+  raw_dir: data/raw
+  output: data/releases/promptsec-dataset-v0.2
+  statistics_json: reports/data_statistics/dataset_v0.2.json
+  statistics_markdown: reports/data_statistics/dataset_v0.2.md
+  review_queue: reports/label_mapping/review_queue_v0.2.jsonl
+  agentic_review_queue: reports/label_mapping/agentic_review_queue_v0.2.jsonl
+
+sources:
+  - configs/sources/promptinject.toml
+  - configs/sources/bipia.toml
+  - configs/sources/open_prompt_injection.toml
+  - configs/sources/notinject.toml
+  - configs/sources/injecagent.toml
+  - configs/sources/agentdojo.toml
+
+mapping_quality:
+  review_threshold: 0.85
+  profiles:
+    promptinject:
+      annotation_tier: DETERMINISTIC_MAPPING
+      mapping_confidence: 1.0
+      requires_manual_review: false
+      review_reasons: []
+    bipia:
+      annotation_tier: HEURISTIC_MAPPING
+      mapping_confidence: 0.70
+      requires_manual_review: true
+      review_reasons:
+        - BIPIA confirms the injected-task role, but its domain labels are not PromptSec-FM annotations.
+        - BIPIA attack-template redistribution remains NOASSERTION pending release review.
+    open_prompt_injection:
+      annotation_tier: HEURISTIC_MAPPING
+      mapping_confidence: 0.80
+      requires_manual_review: true
+      review_reasons:
+        - The target/injected template pair is explicit, but downstream task examples are not imported.
+    notinject:
+      annotation_tier: UNANNOTATED
+      mapping_confidence: 0.20
+      requires_manual_review: true
+      review_reasons:
+        - NotInject is a benign over-defense benchmark, not a human PromptSec-FM v1.0 annotation.
+    injecagent:
+      annotation_tier: HEURISTIC_MAPPING
+      mapping_confidence: 0.80
+      requires_manual_review: true
+      review_reasons:
+        - InjecAgent labels are source-derived benchmark definitions, not human PromptSec-FM annotations.
+        - Authority and policy axes require human review; the upstream data license is NOASSERTION.
+    agentdojo:
+      annotation_tier: HEURISTIC_MAPPING
+      mapping_confidence: 0.55
+      requires_manual_review: true
+      review_reasons:
+        - AgentDojo task and injection definitions are source-derived, not runtime observations or human annotations.
+        - Objectives, authority and alignments remain unresolved pending human review.
+
+deduplication:
+  semantic_threshold: 0.72
+  variant_threshold: 0.90
+
+splits:
+  held_out_source: open_prompt_injection
+  held_out_family: prompt_or_policy_disclosure
+  agentic_sources:
+    - injecagent
+    - agentdojo
+  general_ratios:
+    train: 0.70
+    validation: 0.15
+    test_id: 0.15
+  notinject_ratios:
+    train: 0.10
+    validation: 0.15
+    test_id: 0.75

@@ -1,0 +1,75 @@
+{
+  "local_full_checksums": "checksums.sha256",
+  "local_payloads": [
+    {
+      "name": "agentic_review_queue.jsonl",
+      "publication_status": "LOCAL_ONLY_NOT_REDISTRIBUTED",
+      "records": 3057,
+      "sha256": "679a0d2b2b5aa191bcbff6a7697ad716579648b269b21241d5b504f6ce8cb72a"
+    },
+    {
+      "name": "review_queue.jsonl",
+      "publication_status": "LOCAL_ONLY_NOT_REDISTRIBUTED",
+      "records": 3684,
+      "sha256": "30e2dfe2cc6661747345c930f7522a21df9b9afa0c45f86f9a007d112da10171"
+    },
+    {
+      "name": "test_agentic_provisional.jsonl",
+      "publication_status": "LOCAL_ONLY_NOT_REDISTRIBUTED",
+      "records": 3057,
+      "sha256": "a5d95c3b5aa2aa39741845eb6fba451c8533c59ec07196e100c9eff6ca82c706"
+    },
+    {
+      "name": "test_held_out_family.jsonl",
+      "publication_status": "LOCAL_ONLY_NOT_REDISTRIBUTED",
+      "records": 4,
+      "sha256": "87aad576c13a5ed864e6e6c89b8f5b71a466aad30853b9f413fc2eb4968ed5a4"
+    },
+    {
+      "name": "test_held_out_source.jsonl",
+      "publication_status": "LOCAL_ONLY_NOT_REDISTRIBUTED",
+      "records": 28,
+      "sha256": "7b3f4fefd84fa64447c4114e529b9f5308f6f3b7bffd103f9878de8af3d86ac3"
+    },
+    {
+      "name": "test_id.jsonl",
+      "publication_status": "LOCAL_ONLY_NOT_REDISTRIBUTED",
+      "records": 300,
+      "sha256": "16ed831fe7979658120253b06656263d9050e6124ccd6523eac4471be78e2391"
+    },
+    {
+      "name": "train.jsonl",
+      "publication_status": "LOCAL_ONLY_NOT_REDISTRIBUTED",
+      "records": 211,
+      "sha256": "79f59ef9297015e02f7dd91bb6d22693085b285419101ede1c27fcdc56208ee6"
+    },
+    {
+      "name": "validation.jsonl",
+      "publication_status": "LOCAL_ONLY_NOT_REDISTRIBUTED",
+      "records": 82,
+      "sha256": "caca8964b6be3c0a49ae4910e4f93ccb291ce7501567c47d0b4c34d014f44bff"
+    }
+  ],
+  "no_model_training": true,
+  "payload_records_after_exact_deduplication": 3682,
+  "publication_model": "REPRODUCIBLE_METADATA_ONLY",
+  "publishable_metadata": {
+    "checksums": "checksums_pipeline.txt",
+    "contains_source_text": false,
+    "files": [
+      "dataset_card.md",
+      "sources.json",
+      "licenses.json",
+      "statistics.json",
+      "deduplication_report.json",
+      "split_report.json",
+      "release_manifest.json",
+      "checksums_pipeline.txt"
+    ],
+    "status": "PUBLISHABLE"
+  },
+  "release_id": "promptsec-dataset-v0.2",
+  "review_queue_records": 3684,
+  "schema_version": "0.1",
+  "taxonomy_version": "1.0"
+}

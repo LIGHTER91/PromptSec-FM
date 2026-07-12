@@ -135,6 +135,49 @@ def assign_group(record: Mapping[str, Any]) -> dict[str, Any]:
             assignment_rule=(f"bipia.{rule_name}:{attack_domain}:{payload_type}"),
         )
 
+    agentic = _agentic_metadata(record)
+    if normalized_source == "injecagent":
+        attack_mode = agentic.get("attack_mode")
+        attacker_case_id = agentic.get("attacker_case_id")
+        attack_category = agentic.get("attack_category")
+        if all(
+            isinstance(value, str) and value
+            for value in (attack_mode, attacker_case_id, attack_category)
+        ):
+            return _assignment(
+                domain=str(attack_category),
+                template_family=(
+                    f"injecagent_{_slug(str(attack_mode))}_{_slug(str(attacker_case_id))}"
+                ),
+                assignment_method="SOURCE_METADATA",
+                assignment_rule=(
+                    f"injecagent.attack_mode_attacker_case:{attack_mode}:{attacker_case_id}"
+                ),
+            )
+        return _manual_assignment(
+            domain=str(attack_category or source_id),
+            rule="injecagent.missing_attack_mode_attacker_case_or_category",
+        )
+
+    if normalized_source == "agentdojo":
+        suite_id = agentic.get("suite_id")
+        injection_task_id = agentic.get("injection_task_id")
+        if all(
+            isinstance(value, (str, int)) and str(value) for value in (suite_id, injection_task_id)
+        ):
+            return _assignment(
+                domain=str(suite_id),
+                template_family=(
+                    f"agentdojo_{_slug(str(suite_id))}_{_slug(str(injection_task_id))}"
+                ),
+                assignment_method="SOURCE_METADATA",
+                assignment_rule=(f"agentdojo.suite_injection_task:{suite_id}:{injection_task_id}"),
+            )
+        return _manual_assignment(
+            domain=str(suite_id or source_id),
+            rule="agentdojo.missing_suite_or_injection_task",
+        )
+
     return _manual_assignment(
         domain=source_id,
         rule="fallback.no_documented_source_provenance_rule",
@@ -163,6 +206,14 @@ def _source_metadata(
         original_fields if isinstance(original_fields, Mapping) else {},
         original_labels if isinstance(original_labels, Mapping) else {},
     )
+
+
+def _agentic_metadata(record: Mapping[str, Any]) -> Mapping[str, Any]:
+    extensions = record.get("extensions")
+    if not isinstance(extensions, Mapping):
+        return {}
+    value = extensions.get("agentic_source")
+    return value if isinstance(value, Mapping) else {}
 
 
 def _string_value(

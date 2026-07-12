@@ -11,12 +11,14 @@ from promptsec.data.config import ConfigError, SourceConfig
 ROOT = Path(__file__).resolve().parents[2]
 
 
-def test_all_initial_source_configs_are_pinned_and_linked_to_manifests() -> None:
+def test_all_six_source_configs_are_pinned_and_linked_to_manifests() -> None:
     paths = sorted((ROOT / "configs" / "sources").glob("*.toml"))
     configs = [SourceConfig.load(path) for path in paths]
 
     assert {config.id for config in configs} == {
+        "agentdojo",
         "bipia",
+        "injecagent",
         "notinject",
         "open_prompt_injection",
         "promptinject",
@@ -30,8 +32,41 @@ def test_all_initial_source_configs_are_pinned_and_linked_to_manifests() -> None
         assert all(
             config.revision in artifact.url
             for artifact in config.artifacts
-            if config.id != "notinject"
+            if config.id not in {"agentdojo", "notinject"}
         )
+
+    agentdojo = next(config for config in configs if config.id == "agentdojo")
+    assert agentdojo.version == "0.1.35"
+    assert agentdojo.acquisition.package_name == "agentdojo"
+    assert agentdojo.acquisition.package_version == "0.1.35"
+    assert agentdojo.acquisition.benchmark_version == "v1.2.2"
+    assert agentdojo.artifacts[0].sha256 == (
+        "364bea4219716b716bf639f504d195943f7f6a5535d312ca41d7098704a2affd"
+    )
+
+
+def test_source_lock_matches_the_six_source_configs() -> None:
+    lock = json.loads((ROOT / "manifests" / "source-lock.json").read_text(encoding="utf-8"))
+    entries = {entry["id"]: entry for entry in lock["sources"]}
+    configs = {
+        config.id: config
+        for config in (
+            SourceConfig.load(path)
+            for path in sorted((ROOT / "configs" / "sources").glob("*.toml"))
+        )
+    }
+
+    assert lock["schema_version"] == "0.1"
+    assert entries.keys() == configs.keys()
+    for source_id, config in configs.items():
+        entry = entries[source_id]
+        assert entry["config"] == f"configs/sources/{source_id}.toml"
+        assert entry["version"] == config.version
+        assert entry["revision"] == config.revision
+        assert entry["artifacts"] == {
+            artifact.id: artifact.sha256
+            for artifact in sorted(config.artifacts, key=lambda artifact: artifact.id)
+        }
 
 
 def test_license_manifests_validate_and_match_configs() -> None:

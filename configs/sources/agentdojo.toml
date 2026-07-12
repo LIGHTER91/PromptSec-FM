@@ -1,0 +1,56 @@
+schema_version = "0.1"
+
+[source]
+id = "agentdojo"
+name = "AgentDojo"
+homepage = "https://agentdojo.spylab.ai/"
+repository = "https://github.com/ethz-spylab/agentdojo.git"
+version = "0.1.35"
+revision = "a75aba7631d3ca5fb7ab938965c97ead2f9ff84b"
+license_manifest = "manifests/sources/agentdojo.json"
+importer = "promptsec.data.importers.agentdojo:AgentDojoImporter"
+
+[acquisition]
+method = "python_package_snapshot"
+cache_path = "data/raw/agentdojo/a75aba7631d3ca5fb7ab938965c97ead2f9ff84b"
+license_file = "LICENSE"
+used_files = [
+  "agentdojo/task_suite/__init__.py",
+  "agentdojo/task_suite/load_suites.py",
+  "agentdojo/task_suite/task_suite.py",
+  "agentdojo/base_tasks.py",
+  "agentdojo/default_suites/",
+]
+package_name = "agentdojo"
+package_version = "0.1.35"
+benchmark_version = "v1.2.2"
+snapshot_filename = "agentdojo-0.1.35-v1.2.2.snapshot.json"
+snapshot_sha256 = "2edb1a68f94ed3a24323c4f7b9e94797a6856f8083e7d4b0faf9daec7e955fc9"
+
+[scenario]
+language = "en"
+delivery_mode = "INDIRECT"
+source_role = "TOOL"
+content_origin = "TOOL_OUTPUT"
+ingestion_path = "TOOL_CALL"
+modality = "TEXT"
+source_integrity = "UNKNOWN"
+
+[fields]
+text = ["injection_goal"]
+labels = [
+  "suite_id",
+  "user_task_id",
+  "injection_task_id",
+  "user_task_difficulty",
+  "injection_task_difficulty",
+]
+record_id = ["security_case_id"]
+
+[[artifacts]]
+id = "agentdojo_wheel"
+split = "static_security_cases"
+format = "zip"
+url = "https://files.pythonhosted.org/packages/ca/a0/371be72fdd08bbae0c3c5cd22e6b35390f35c9cbe189d14b72e49058bd4b/agentdojo-0.1.35-py3-none-any.whl"
+sha256 = "364bea4219716b716bf639f504d195943f7f6a5535d312ca41d7098704a2affd"
+local_path = "agentdojo-0.1.35-py3-none-any.whl"

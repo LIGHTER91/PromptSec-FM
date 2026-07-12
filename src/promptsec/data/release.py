@@ -6,12 +6,13 @@ import copy
 import json
 import os
 import shutil
+from collections.abc import Mapping
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
+from promptsec.data.acquisition import acquire_source
 from promptsec.data.config import SourceConfig
-from promptsec.data.fetch import fetch_artifacts
 from promptsec.data.hashing import sha256_file
 from promptsec.data.importers.base import load_importer
 from promptsec.data.quality.deduplication import DedupConfig, DedupResult, analyze_duplicates
@@ -22,14 +23,18 @@ from promptsec.data.quality.statistics import compute_statistics, render_statist
 from promptsec.data.release_config import DatasetReleaseConfig
 from promptsec.data.validation import require_valid_record
 
-_SPLIT_NAMES = (
-    "train",
-    "validation",
-    "test_id",
-    "test_held_out_source",
-    "test_held_out_family",
-)
 _HASH_FIELDS = ("raw_hash", "normalized_hash", "contextual_hash")
+_FULL_CHECKSUMS = "checksums.sha256"
+_PIPELINE_CHECKSUMS = "checksums_pipeline.txt"
+_PUBLISHABLE_METADATA_FILES = (
+    "dataset_card.md",
+    "sources.json",
+    "licenses.json",
+    "statistics.json",
+    "deduplication_report.json",
+    "split_report.json",
+    "release_manifest.json",
+)
 
 
 class ReleaseBuildError(RuntimeError):
@@ -67,17 +72,23 @@ def build_release(
     config_path: str | Path,
     *,
     output_override: str | Path | None = None,
+    offline: bool = False,
+    source_overrides: Mapping[str, str | Path] | None = None,
 ) -> ReleaseBuildReport:
     """Fetch pinned sources and build the complete audited release."""
 
     config = DatasetReleaseConfig.load(config_path)
     output = _resolve_output(config, output_override)
-    records, sources, licenses = _import_sources(config)
+    records, sources, licenses = _import_sources(
+        config,
+        offline=offline,
+        source_overrides=source_overrides or {},
+    )
     analysis = analyze_release_records(records, config)
     _write_release(output, config, analysis, sources, licenses)
     _write_external_reports(config, analysis)
 
-    split_records = {name: len(analysis.splits.splits[name]) for name in _SPLIT_NAMES}
+    split_records = {name: len(analysis.splits.splits[name]) for name in config.split_names}
     summary = analysis.deduplication.report["summary"]
     return ReleaseBuildReport(
         release_id=config.identity.id,
@@ -89,7 +100,7 @@ def build_release(
         dropped_exact_duplicates=int(summary["dropped_exact_duplicates"]),
         semantic_clusters=int(summary["semantic_clusters"]),
         publication_status=licenses["publication_status"],
-        checksums_sha256=sha256_file(output / "checksums.sha256"),
+        checksums_sha256=sha256_file(output / _FULL_CHECKSUMS),
     )
 
 
@@ -138,13 +149,17 @@ def analyze_release_records(
             held_out_family=config.splits.held_out_family,
             general_ratios=config.splits.general_ratios,
             notinject_ratios=config.splits.notinject_ratios,
+            agentic_sources=frozenset(config.splits.agentic_sources),
         ),
     )
     if not splits.report["constraints"]["all_satisfied"]:
         raise ReleaseBuildError("split construction violated one or more leakage constraints")
 
     enriched: list[dict[str, Any]] = []
-    release_schema = config.project_root / "schemas" / "promptsec-release-record-v0.1.schema.json"
+    profile_version = "v0.2" if config.schema_version == "0.2" else "v0.1"
+    release_schema = (
+        config.project_root / "schemas" / f"promptsec-release-record-{profile_version}.schema.json"
+    )
     if not release_schema.is_file():
         # Synthetic tests may place their release config outside the checkout.
         release_schema = Path(__file__).resolve().parents[3] / "schemas" / release_schema.name
@@ -177,7 +192,7 @@ def analyze_release_records(
         "released_records": sum(len(values) for values in splits.splits.values()),
         "dropped_exact_duplicates": len(splits.report["dropped_exact_ids"]),
         "semantic_clusters": deduplication.report["summary"]["semantic_clusters"],
-        "records_by_split": {name: len(splits.splits[name]) for name in _SPLIT_NAMES},
+        "records_by_split": {name: len(splits.splits[name]) for name in config.split_names},
     }
     review_queue = build_review_queue(enriched, config.mapping_quality.review_threshold)
     statistics["release"]["review_queue_records"] = len(review_queue)
@@ -201,9 +216,9 @@ def verify_release_checksums(output: str | Path) -> list[str]:
     """Return checksum failures; an empty list means the release is intact."""
 
     root = Path(output).resolve()
-    checksum_path = root / "checksums.sha256"
+    checksum_path = root / _FULL_CHECKSUMS
     if not checksum_path.is_file():
-        return ["missing checksums.sha256"]
+        return [f"missing {_FULL_CHECKSUMS}"]
     failures: list[str] = []
     for line_number, line in enumerate(checksum_path.read_text(encoding="utf-8").splitlines(), 1):
         if not line.strip():
@@ -211,11 +226,11 @@ def verify_release_checksums(output: str | Path) -> list[str]:
         try:
             expected, relative = line.split("  ", 1)
         except ValueError:
-            failures.append(f"checksums.sha256:{line_number}: malformed line")
+            failures.append(f"{_FULL_CHECKSUMS}:{line_number}: malformed line")
             continue
         candidate = (root / relative).resolve()
         if not candidate.is_relative_to(root):
-            failures.append(f"checksums.sha256:{line_number}: unsafe path {relative}")
+            failures.append(f"{_FULL_CHECKSUMS}:{line_number}: unsafe path {relative}")
             continue
         if not candidate.is_file():
             failures.append(f"missing {relative}")
@@ -228,11 +243,19 @@ def verify_release_checksums(output: str | Path) -> list[str]:
 
 def _import_sources(
     config: DatasetReleaseConfig,
+    *,
+    offline: bool,
+    source_overrides: Mapping[str, str | Path],
 ) -> tuple[list[dict[str, Any]], dict[str, Any], dict[str, Any]]:
     records: list[dict[str, Any]] = []
     source_entries: list[dict[str, Any]] = []
     license_entries: list[dict[str, Any]] = []
     seen_sources: set[str] = set()
+
+    configured_source_ids = {SourceConfig.load(path).id for path in config.source_configs}
+    unknown_overrides = sorted(set(source_overrides) - configured_source_ids)
+    if unknown_overrides:
+        raise ReleaseBuildError(f"source overrides have no configured source: {unknown_overrides}")
 
     for source_path in config.source_configs:
         source = SourceConfig.load(source_path)
@@ -242,7 +265,12 @@ def _import_sources(
             raise ReleaseBuildError(f"missing mapping-quality profile for source {source.id}")
         seen_sources.add(source.id)
 
-        artifact_paths = fetch_artifacts(source, config.paths.raw_dir)
+        artifact_paths = acquire_source(
+            source,
+            config.paths.raw_dir,
+            offline=offline,
+            local_path=source_overrides.get(source.id),
+        ).artifacts
         importer = load_importer(
             source.importer,
             source,
@@ -281,6 +309,17 @@ def _import_sources(
                 "config": _portable_path(source.path, config.project_root),
                 "config_sha256": source.sha256,
                 "license_manifest": source.license_manifest,
+                "acquisition": {
+                    "method": source.acquisition.method,
+                    "cache_path": source.acquisition.cache_path,
+                    "license_file": source.acquisition.license_file,
+                    "used_files": list(source.acquisition.used_files),
+                    "package_name": source.acquisition.package_name,
+                    "package_version": source.acquisition.package_version,
+                    "benchmark_version": source.acquisition.benchmark_version,
+                    "snapshot_filename": source.acquisition.snapshot_filename,
+                    "snapshot_sha256": source.acquisition.snapshot_sha256,
+                },
                 "artifacts": artifact_entries,
             }
         )
@@ -310,15 +349,14 @@ def _import_sources(
         "release_config_sha256": config.sha256,
         "sources": sorted(source_entries, key=lambda item: item["id"]),
     }
-    licenses = {
-        "schema_version": "0.1",
-        "release_id": config.identity.id,
-        "notice": (
-            "License obligations remain component-specific; NOASSERTION and conditional "
-            "entries require release-time review."
-        ),
-        "sources": sorted(license_entries, key=lambda item: item["manifest"]["source_id"]),
-    }
+    licenses = _license_inventory(config.identity.id, license_entries)
+    return records, sources, licenses
+
+
+def _license_inventory(release_id: str, license_entries: list[dict[str, Any]]) -> dict[str, Any]:
+    """Build a component-scoped publication decision without flattening source terms."""
+
+    ordered_entries = sorted(license_entries, key=lambda item: item["manifest"]["source_id"])
     publication_blockers = [
         {
             "source_id": entry["manifest"]["source_id"],
@@ -327,15 +365,42 @@ def _import_sources(
             "redistribution": component.get("redistribution"),
             "reason": "Redistribution permission is unresolved in the source manifest.",
         }
-        for entry in licenses["sources"]
+        for entry in ordered_entries
         for component in entry["manifest"].get("components", [])
         if component.get("redistribution") == "unknown"
     ]
-    licenses["publication_status"] = (
+    payload_status = (
         "BLOCKED_PENDING_LICENSE_REVIEW" if publication_blockers else "MANIFEST_REVIEW_COMPLETE"
     )
-    licenses["publication_blockers"] = publication_blockers
-    return records, sources, licenses
+    return {
+        "schema_version": "0.1",
+        "release_id": release_id,
+        "notice": (
+            "License obligations remain component-specific; NOASSERTION and conditional "
+            "entries require release-time review."
+        ),
+        "publication_status": payload_status,
+        "publication_scope": "dataset_payload",
+        "publication_components": {
+            "repository_code": {
+                "status": "PUBLISHABLE",
+                "license": "PROJECT_LICENSE",
+            },
+            "reports_and_metadata": {
+                "status": "PUBLISHABLE",
+                "contains_source_text": False,
+            },
+            "dataset_payload": {
+                "status": payload_status,
+                "contains_source_text": True,
+                "distribution": "LOCAL_REBUILD_ONLY"
+                if publication_blockers
+                else "SOURCE_TERMS_APPLY",
+            },
+        },
+        "publication_blockers": publication_blockers,
+        "sources": ordered_entries,
+    }
 
 
 def _write_release(
@@ -348,7 +413,7 @@ def _write_release(
     staging = output.with_name(f".{output.name}.tmp")
     _reset_directory(staging)
     try:
-        for split_name in _SPLIT_NAMES:
+        for split_name in config.split_names:
             split_records = [
                 analysis.records_by_id[record_id]
                 for record_id in analysis.splits.splits[split_name]
@@ -356,6 +421,13 @@ def _write_release(
             _write_jsonl(staging / f"{split_name}.jsonl", split_records)
 
         _write_jsonl(staging / "review_queue.jsonl", analysis.review_queue)
+        if config.splits.agentic_sources:
+            agentic_queue = [
+                entry
+                for entry in analysis.review_queue
+                if entry.get("source") in config.splits.agentic_sources
+            ]
+            _write_jsonl(staging / "agentic_review_queue.jsonl", agentic_queue)
         _write_json(staging / "statistics.json", analysis.statistics)
         _write_json(staging / "sources.json", sources)
         _write_json(staging / "licenses.json", licenses)
@@ -373,6 +445,15 @@ def _write_release(
         _write_json(staging / "split_report.json", split_report)
         (staging / "dataset_card.md").write_text(
             _dataset_card(config, analysis, licenses), encoding="utf-8", newline="\n"
+        )
+        _write_json(
+            staging / "release_manifest.json",
+            _release_manifest(staging, config, analysis),
+        )
+        _write_named_checksums(
+            staging,
+            _PIPELINE_CHECKSUMS,
+            _PUBLISHABLE_METADATA_FILES,
         )
         _write_checksums(staging)
         failures = verify_release_checksums(staging)
@@ -397,6 +478,13 @@ def _write_external_reports(config: DatasetReleaseConfig, analysis: ReleaseAnaly
         newline="\n",
     )
     _write_jsonl(config.paths.review_queue, analysis.review_queue)
+    if config.paths.agentic_review_queue is not None:
+        agentic_queue = [
+            entry
+            for entry in analysis.review_queue
+            if entry.get("source") in config.splits.agentic_sources
+        ]
+        _write_jsonl(config.paths.agentic_review_queue, agentic_queue)
 
 
 def _dataset_card(
@@ -409,10 +497,16 @@ def _dataset_card(
     tier_counts = stats["mapping_quality"]["tiers"]
     split_counts = stats["release"]["records_by_split"]
     constraints = analysis.splits.report["constraints"]
+    source_revisions = {
+        record["metadata"]["dataset_provenance"]["source_dataset"]["id"]: record["metadata"][
+            "dataset_provenance"
+        ]["source_dataset"]["revision"]
+        for record in analysis.records
+    }
     lines = [
         f"# {config.identity.title}",
         "",
-        "PromptSec-Dataset v0.1 is an **experimental audited release**. It is not a "
+        f"{config.identity.title} is an **experimental audited release**. It is not a "
         "final training split, and this build does not train a model.",
         "",
         "## Scope",
@@ -425,10 +519,13 @@ def _dataset_card(
         "",
         "## Source distribution before deduplication",
         "",
-        "| Source | Records |",
-        "|---|---:|",
+        "| Source | Records | Pinned revision |",
+        "|---|---:|---|",
     ]
-    lines.extend(f"| {source} | {count} |" for source, count in sorted(source_counts.items()))
+    lines.extend(
+        f"| {source} | {count} | {source_revisions.get(source) or 'version pin'} |"
+        for source, count in sorted(source_counts.items())
+    )
     lines.extend(
         [
             "",
@@ -451,7 +548,7 @@ def _dataset_card(
             "|---|---:|",
         ]
     )
-    lines.extend(f"| {name} | {split_counts[name]} |" for name in _SPLIT_NAMES)
+    lines.extend(f"| {name} | {split_counts[name]} |" for name in config.split_names)
     lines.extend(
         [
             "",
@@ -478,41 +575,118 @@ def _dataset_card(
             "variants or sent to review, and clusters remain atomic across splits.",
             "",
             "Template families come only from source metadata, generation templates, documented "
-            "mapping rules, or manual review. See `docs/family_mapping_v0.1.md`.",
+            "mapping rules, or manual review. See the versioned family-mapping document in "
+            "`docs/`.",
             "",
             "## Limitations and licensing",
             "",
-            "The 627 imported records are strongly source-imbalanced. PromptInject and "
-            "Open-Prompt-Injection are small, while BIPIA and NotInject dominate. The release "
-            "contains uncertain and non-annotated mappings explicitly isolated in the review "
-            "queue. Consult `licenses.json` before redistribution: obligations are component-"
+            "The corpus is source-imbalanced and contains uncertain or non-annotated mappings "
+            "explicitly isolated in review queues. Consult `statistics.json` for exact source "
+            "shares and `licenses.json` before redistribution; obligations are component-"
             "specific.",
             "",
-            f"Publication status: **{licenses['publication_status']}**. BIPIA attack-template "
-            "redistribution is recorded as NOASSERTION/unknown, so this local experimental "
-            "artifact must not be published until that license review is resolved.",
+            "Generated split and review-queue JSONL files are local reconstruction outputs. "
+            "They are deliberately ignored by Git and are not redistributed in this release. "
+            "The committed release surface contains only redacted statistics, provenance "
+            "identifiers, decisions, and checksums.",
+            "",
+            f"Dataset-payload publication status: **{licenses['publication_status']}**. One or "
+            "more source payload components, including the existing BIPIA restriction, remain "
+            "NOASSERTION/unknown. Repository code and redacted reports remain separately "
+            "classified in `licenses.json`.",
             "",
             "## Rebuild",
             "",
             "```bash",
-            "python scripts/build_dataset.py --config configs/dataset_v0.1.yaml "
-            "--output data/releases/promptsec-dataset-v0.1",
+            f"python scripts/build_dataset.py --config "
+            f"{_portable_path(config.path, config.project_root)} --output "
+            f"{_portable_path(config.paths.output, config.project_root)} --offline",
             "```",
             "",
-            "`checksums.sha256` covers every other release file. With the pinned artifacts and "
-            "configuration, two builds are byte-identical.",
+            "Local `checksums.sha256` covers every other release file, including ignored "
+            "payloads. Tracked `checksums_pipeline.txt` covers only publishable redacted "
+            "metadata. With the pinned artifacts and configuration, two builds are byte-"
+            "identical. No model is trained by this command.",
             "",
         ]
     )
+    if config.splits.agentic_sources:
+        lines.extend(
+            [
+                "",
+                "## Agentic provisional evaluation",
+                "",
+                "InjecAgent and AgentDojo labels are source-derived definitions, not human "
+                "gold annotations. Their records are isolated in "
+                "`test_agentic_provisional` and `agentic_review_queue.jsonl`; none enter "
+                "training. Runtime attack success, model behavior, defenses, and tool "
+                "executions are not imported.",
+                "",
+                "- Agentic sources outside the provisional split: "
+                f"{not constraints['no_agentic_source_outside_provisional']}",
+                "- Agentic parent-group leakage: "
+                f"{not constraints['no_agentic_parent_group_leakage']}",
+            ]
+        )
     return "\n".join(lines)
+
+
+def _release_manifest(
+    staging: Path,
+    config: DatasetReleaseConfig,
+    analysis: ReleaseAnalysis,
+) -> dict[str, Any]:
+    """Describe local payloads without copying any source-derived content."""
+
+    payloads = []
+    for path in sorted(staging.glob("*.jsonl"), key=lambda item: item.name):
+        records = sum(1 for line in path.read_text(encoding="utf-8").splitlines() if line.strip())
+        payloads.append(
+            {
+                "name": path.name,
+                "records": records,
+                "sha256": sha256_file(path),
+                "publication_status": "LOCAL_ONLY_NOT_REDISTRIBUTED",
+            }
+        )
+    return {
+        "schema_version": "0.1",
+        "release_id": config.identity.id,
+        "taxonomy_version": config.identity.taxonomy_version,
+        "no_model_training": True,
+        "publication_model": "REPRODUCIBLE_METADATA_ONLY",
+        "local_payloads": payloads,
+        "payload_records_after_exact_deduplication": sum(
+            len(record_ids) for record_ids in analysis.splits.splits.values()
+        ),
+        "review_queue_records": len(analysis.review_queue),
+        "publishable_metadata": {
+            "status": "PUBLISHABLE",
+            "contains_source_text": False,
+            "files": [*_PUBLISHABLE_METADATA_FILES, _PIPELINE_CHECKSUMS],
+            "checksums": _PIPELINE_CHECKSUMS,
+        },
+        "local_full_checksums": _FULL_CHECKSUMS,
+    }
+
+
+def _write_named_checksums(root: Path, output_name: str, file_names: tuple[str, ...]) -> None:
+    paths = [root / name for name in file_names]
+    missing = [path.name for path in paths if not path.is_file()]
+    if missing:
+        raise ReleaseBuildError(
+            f"cannot write {output_name}; missing publishable metadata: {missing}"
+        )
+    lines = [f"{sha256_file(path)}  {path.name}" for path in paths]
+    (root / output_name).write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
 
 
 def _write_checksums(root: Path) -> None:
     files = sorted(
-        path for path in root.rglob("*") if path.is_file() and path.name != "checksums.sha256"
+        path for path in root.rglob("*") if path.is_file() and path.name != _FULL_CHECKSUMS
     )
     lines = [f"{sha256_file(path)}  {path.relative_to(root).as_posix()}" for path in files]
-    (root / "checksums.sha256").write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
+    (root / _FULL_CHECKSUMS).write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
 
 
 def _write_json(path: Path, value: Any) -> None:
@@ -578,6 +752,20 @@ def _source_semantic_group_key(record: dict[str, Any], grouping: dict[str, Any])
         task_config = original_fields.get("task_config")
         if isinstance(task_config, str) and task_config:
             return f"open_prompt_injection:{task_config}"
+    extensions = record.get("extensions")
+    agentic = extensions.get("agentic_source") if isinstance(extensions, dict) else None
+    if source_id == "injecagent" and isinstance(agentic, dict):
+        attack_mode = agentic.get("attack_mode")
+        attacker_case_id = agentic.get("attacker_case_id")
+        if all(isinstance(value, str) and value for value in (attack_mode, attacker_case_id)):
+            return f"injecagent:{attack_mode}:{attacker_case_id}"
+    if source_id == "agentdojo" and isinstance(agentic, dict):
+        suite_id = agentic.get("suite_id")
+        injection_task_id = agentic.get("injection_task_id")
+        if all(
+            isinstance(value, (str, int)) and str(value) for value in (suite_id, injection_task_id)
+        ):
+            return f"agentdojo:{suite_id}:{injection_task_id}"
     return None
 
 

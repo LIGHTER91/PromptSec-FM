@@ -162,6 +162,13 @@ def compute_statistics(
     attack_families: Counter[str] = Counter()
     attack_objectives: Counter[str] = Counter()
     delivery_modes: Counter[str] = Counter()
+    benchmark_suites: Counter[str] = Counter()
+    user_tools: Counter[str] = Counter()
+    attacker_tools: Counter[str] = Counter()
+    injecagent_attack_categories: Counter[str] = Counter()
+    injecagent_settings: Counter[str] = Counter()
+    agentdojo_suites: Counter[str] = Counter()
+    mapping_confidence_values: Counter[str] = Counter()
     tiers: Counter[str] = Counter()
     span_types: Counter[str] = Counter()
     unknown_counts: dict[str, Counter[str]] = {
@@ -187,11 +194,32 @@ def compute_statistics(
         grouping = quality.get("grouping")
         grouping = grouping if isinstance(grouping, Mapping) else {}
         mapping_quality = _mapping_quality(record)
+        agentic = _nested(record, "extensions", "agentic_source")
+        agentic = agentic if isinstance(agentic, Mapping) else {}
 
         sources[_source(record)] += 1
         languages[_label(content.get("language"))] += 1
         domains[_label(grouping.get("domain"))] += 1
         delivery_modes[_label(content.get("delivery_mode"))] += 1
+        suite_id = agentic.get("suite_id")
+        if isinstance(suite_id, str) and suite_id:
+            benchmark_suites[suite_id] += 1
+            if _source(record) == "agentdojo":
+                agentdojo_suites[suite_id] += 1
+        user_tool = agentic.get("user_tool")
+        if isinstance(user_tool, str) and user_tool:
+            user_tools[user_tool] += 1
+        source_attacker_tools = agentic.get("attacker_tools")
+        if isinstance(source_attacker_tools, list):
+            attacker_tools.update(
+                sorted({item for item in source_attacker_tools if isinstance(item, str) and item})
+            )
+        attack_category = agentic.get("attack_category")
+        if isinstance(attack_category, str) and attack_category:
+            injecagent_attack_categories[attack_category] += 1
+        setting = agentic.get("setting")
+        if isinstance(setting, str) and setting:
+            injecagent_settings[setting] += 1
         _increment_multi_label(
             attack_families,
             annotations.get("attack_families"),
@@ -219,6 +247,7 @@ def compute_statistics(
             and 0.0 <= float(confidence) <= 1.0
         ):
             mapping_confidences.append(float(confidence))
+            mapping_confidence_values[f"{float(confidence):.2f}"] += 1
         else:
             missing_mapping_confidence += 1
 
@@ -281,6 +310,13 @@ def compute_statistics(
             "attack_objective": _sorted_counts(attack_objectives),
             "delivery_mode": _sorted_counts(delivery_modes),
             "annotation_tier": _sorted_counts(tiers),
+            "benchmark_suite": _sorted_counts(benchmark_suites),
+            "user_tool": _sorted_counts(user_tools),
+            "attacker_tool": _sorted_counts(attacker_tools),
+            "injecagent_attack_category": _sorted_counts(injecagent_attack_categories),
+            "injecagent_setting": _sorted_counts(injecagent_settings),
+            "agentdojo_suite": _sorted_counts(agentdojo_suites),
+            "mapping_confidence": _sorted_counts(mapping_confidence_values),
         },
         "mapping_quality": {
             "tiers": tier_metrics,
@@ -369,8 +405,12 @@ def render_statistics_markdown(stats: Mapping[str, Any]) -> str:
     release = stats.get("release")
     release = release if isinstance(release, Mapping) else {}
 
+    release_id = release.get("id")
+    report_title = (
+        str(release_id) if isinstance(release_id, str) and release_id else "PromptSec-Dataset"
+    )
     lines = [
-        "# PromptSec-Dataset v0.1 statistics",
+        f"# {report_title} statistics",
         "",
         "This report is generated deterministically from canonical records. P95 uses the "
         "nearest-rank method.",
@@ -400,6 +440,13 @@ def render_statistics_markdown(stats: Mapping[str, Any]) -> str:
         ("attack_objective", "Attack objective"),
         ("delivery_mode", "Delivery mode"),
         ("annotation_tier", "Annotation tier"),
+        ("benchmark_suite", "Benchmark suite"),
+        ("user_tool", "User tool"),
+        ("attacker_tool", "Attacker tool"),
+        ("injecagent_attack_category", "InjecAgent attack category"),
+        ("injecagent_setting", "InjecAgent setting"),
+        ("agentdojo_suite", "AgentDojo suite"),
+        ("mapping_confidence", "Mapping confidence"),
     )
     for key, title in distribution_titles:
         counts = distributions.get(key)

@@ -18,6 +18,7 @@ _OUTPUT_SPLITS = (
     "test_held_out_source",
     "test_held_out_family",
 )
+_AGENTIC_SPLIT = "test_agentic_provisional"
 _DEDUP_DECISIONS = {
     "KEEP",
     "DROP_EXACT_DUPLICATE",
@@ -37,6 +38,7 @@ class SplitConfig:
     seed: int = 0
     held_out_source: str | None = None
     held_out_family: str | None = None
+    agentic_sources: frozenset[str] = field(default_factory=frozenset)
     general_ratios: Mapping[str, float] = field(
         default_factory=lambda: {"train": 0.8, "validation": 0.1, "test_id": 0.1}
     )
@@ -51,6 +53,11 @@ class SplitConfig:
             value = getattr(self, name)
             if value is not None and (not isinstance(value, str) or not value):
                 raise SplitError(f"{name} must be a non-empty string or None")
+        if not isinstance(self.agentic_sources, (set, frozenset, list, tuple)) or not all(
+            isinstance(value, str) and value for value in self.agentic_sources
+        ):
+            raise SplitError("agentic_sources must contain non-empty source ids")
+        object.__setattr__(self, "agentic_sources", frozenset(self.agentic_sources))
         object.__setattr__(
             self,
             "general_ratios",
@@ -128,8 +135,9 @@ def assign_splits(
         source_by_id[record_id] = source
         cluster_members[cluster_id].append(record_id)
 
+    output_splits = (*_OUTPUT_SPLITS, _AGENTIC_SPLIT) if config.agentic_sources else _OUTPUT_SPLITS
     assignments: dict[str, str] = {}
-    splits: dict[str, list[str]] = {name: [] for name in _OUTPUT_SPLITS}
+    splits: dict[str, list[str]] = {name: [] for name in output_splits}
     cluster_assignments: dict[str, str] = {}
     ratio_policy_by_cluster: dict[str, str] = {}
 
@@ -150,9 +158,14 @@ def assign_splits(
         for cluster_id, sources in cluster_sources_by_id.items()
         if config.held_out_source and config.held_out_source in sources
     }
+    agentic_clusters = {
+        cluster_id
+        for cluster_id, sources in cluster_sources_by_id.items()
+        if not sources.isdisjoint(config.agentic_sources)
+    }
     held_out_family_clusters, held_out_family_closure = _family_holdout_closure(
         cluster_families_by_id,
-        held_out_source_clusters,
+        held_out_source_clusters | agentic_clusters,
         config.held_out_family,
     )
 
@@ -167,7 +180,10 @@ def assign_splits(
             continue
 
         cluster_sources = cluster_sources_by_id[cluster_id]
-        if cluster_id in held_out_source_clusters:
+        if cluster_id in agentic_clusters:
+            split = _AGENTIC_SPLIT
+            ratio_policy = "agentic_provisional"
+        elif cluster_id in held_out_source_clusters:
             split = "test_held_out_source"
             ratio_policy = "held_out_source"
         elif cluster_id in held_out_family_clusters:
@@ -210,6 +226,7 @@ def assign_splits(
         general_ratios=general_ratios,
         notinject_ratios=notinject_ratios,
         held_out_family_closure=held_out_family_closure,
+        output_splits=output_splits,
     )
     return SplitResult(assignments=assignments, splits=splits, report=report)
 
@@ -259,6 +276,7 @@ def _build_report(
     general_ratios: Mapping[str, float],
     notinject_ratios: Mapping[str, float],
     held_out_family_closure: set[str],
+    output_splits: tuple[str, ...],
 ) -> dict[str, Any]:
     train_ids = set(splits["train"])
     held_out_source_in_train = sorted(
@@ -302,15 +320,37 @@ def _build_report(
     held_out_family_train_overlap = sorted(train_families & test_held_out_families)
     no_held_out_family_train_overlap = not held_out_family_train_overlap
     no_cluster_leakage = not cluster_leakage
+    agentic_outside_provisional = sorted(
+        record_id
+        for record_id, source in source_by_id.items()
+        if source in config.agentic_sources
+        and assignments.get(record_id) not in {_AGENTIC_SPLIT, "DROPPED_EXACT"}
+    )
+    no_agentic_source_outside_provisional = not agentic_outside_provisional
+    parent_group_splits: defaultdict[str, set[str]] = defaultdict(set)
+    for record_id, split in assignments.items():
+        if split == "DROPPED_EXACT":
+            continue
+        parent_group = _agentic_parent_group(records_by_id[record_id])
+        if parent_group:
+            parent_group_splits[parent_group].add(split)
+    agentic_parent_group_leakage = {
+        group_id: sorted(group_splits)
+        for group_id, group_splits in sorted(parent_group_splits.items())
+        if len(group_splits) > 1
+    }
+    no_agentic_parent_group_leakage = not agentic_parent_group_leakage
     all_satisfied = (
         no_held_out_source_in_train
         and no_held_out_family_in_train
         and no_held_out_family_train_overlap
         and no_cluster_leakage
+        and no_agentic_source_outside_provisional
+        and no_agentic_parent_group_leakage
         and exact_duplicates_excluded
     )
 
-    records_by_split = {name: len(splits[name]) for name in _OUTPUT_SPLITS}
+    records_by_split = {name: len(splits[name]) for name in output_splits}
     records_by_split["DROPPED_EXACT"] = len(dropped_exact_ids)
     clusters_by_split = dict(sorted(Counter(cluster_assignments.values()).items()))
     sources_by_split = _distribution_by_split(splits, source_by_id)
@@ -323,10 +363,16 @@ def _build_report(
         "kept_records": len(records_by_id) - len(dropped_exact_ids),
         "dropped_exact_ids": dropped_exact_ids,
         "policy": {
-            "priority": ["held_out_source", "held_out_family", "stable_hash"],
+            "priority": [
+                "agentic_provisional",
+                "held_out_source",
+                "held_out_family",
+                "stable_hash",
+            ],
             "held_out_source": config.held_out_source,
             "held_out_family": config.held_out_family,
             "held_out_family_closure": sorted(held_out_family_closure),
+            "agentic_sources": sorted(config.agentic_sources),
             "general_ratios": dict(general_ratios),
             "notinject_ratios": dict(notinject_ratios),
             "hash": "sha256(seed, semantic_cluster_id) with ratio thresholds",
@@ -337,12 +383,16 @@ def _build_report(
             "no_held_out_family_in_train": no_held_out_family_in_train,
             "no_template_family_overlap_with_train": no_held_out_family_train_overlap,
             "no_cluster_leakage": no_cluster_leakage,
+            "no_agentic_source_outside_provisional": no_agentic_source_outside_provisional,
+            "no_agentic_parent_group_leakage": no_agentic_parent_group_leakage,
             "exact_duplicates_excluded": exact_duplicates_excluded,
             "all_satisfied": all_satisfied,
             "held_out_source_in_train": held_out_source_in_train,
             "held_out_family_in_train": held_out_family_in_train,
             "template_family_overlap_with_train": held_out_family_train_overlap,
             "cluster_leakage": cluster_leakage,
+            "agentic_source_outside_provisional": agentic_outside_provisional,
+            "agentic_parent_group_leakage": agentic_parent_group_leakage,
         },
         "distributions": {
             "records_by_split": records_by_split,
@@ -434,6 +484,18 @@ def _source_id(record: Mapping[str, Any]) -> str:
     source_dataset = provenance.get("source_dataset") if isinstance(provenance, Mapping) else None
     source_id = source_dataset.get("id") if isinstance(source_dataset, Mapping) else None
     return source_id if isinstance(source_id, str) and source_id else "unknown"
+
+
+def _agentic_parent_group(record: Mapping[str, Any]) -> str | None:
+    extensions = record.get("extensions")
+    agentic = extensions.get("agentic_source") if isinstance(extensions, Mapping) else None
+    if not isinstance(agentic, Mapping):
+        return None
+    for field_name in ("parent_group_id", "pair_group_id", "security_case_id"):
+        value = agentic.get(field_name)
+        if isinstance(value, str) and value:
+            return value
+    return None
 
 
 def _normalized_source(source: str) -> str:

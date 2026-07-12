@@ -33,3 +33,14 @@ def test_rejects_split_ratios_that_do_not_sum_to_one(tmp_path: Path) -> None:
 
     with pytest.raises(ReleaseConfigError, match="sum to 1.0"):
         DatasetReleaseConfig.load(invalid)
+
+
+def test_loads_phase_33_release_with_provisional_agentic_split() -> None:
+    config = DatasetReleaseConfig.load(ROOT / "configs" / "dataset_v0.2.yaml")
+
+    assert config.schema_version == "0.2"
+    assert config.identity.id == "promptsec-dataset-v0.2"
+    assert config.splits.agentic_sources == ("agentdojo", "injecagent")
+    assert config.split_names[-1] == "test_agentic_provisional"
+    assert len(config.source_configs) == 6
+    assert all(path.is_file() for path in config.source_configs)

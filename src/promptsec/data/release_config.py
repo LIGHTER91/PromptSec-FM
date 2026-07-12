@@ -79,6 +79,7 @@ class ReleasePaths:
     statistics_json: Path
     statistics_markdown: Path
     review_queue: Path
+    agentic_review_queue: Path | None
 
 
 @dataclass(frozen=True, slots=True)
@@ -99,11 +100,13 @@ class SplitSettings:
     held_out_family: str
     general_ratios: dict[str, float]
     notinject_ratios: dict[str, float]
+    agentic_sources: tuple[str, ...]
 
 
 @dataclass(frozen=True, slots=True)
 class DatasetReleaseConfig:
     path: Path
+    schema_version: str
     project_root: Path
     identity: DatasetIdentity
     paths: ReleasePaths
@@ -116,6 +119,17 @@ class DatasetReleaseConfig:
     def sha256(self) -> str:
         return sha256_file(self.path)
 
+    @property
+    def split_names(self) -> tuple[str, ...]:
+        base = (
+            "train",
+            "validation",
+            "test_id",
+            "test_held_out_source",
+            "test_held_out_family",
+        )
+        return (*base, "test_agentic_provisional") if self.splits.agentic_sources else base
+
     @classmethod
     def load(cls, path: str | Path) -> DatasetReleaseConfig:
         config_path = Path(path).resolve()
@@ -124,8 +138,9 @@ class DatasetReleaseConfig:
         except (OSError, yaml.YAMLError) as exc:
             raise ReleaseConfigError(f"cannot read {config_path}: {exc}") from exc
         root = _mapping(raw, "config")
-        if _required(root, "schema_version", "config") != "0.1":
-            raise ReleaseConfigError("config.schema_version must equal '0.1'")
+        schema_version = str(_required(root, "schema_version", "config"))
+        if schema_version not in {"0.1", "0.2"}:
+            raise ReleaseConfigError("config.schema_version must equal '0.1' or '0.2'")
 
         project_root_value = str(_required(root, "project_root", "config"))
         project_root = (config_path.parent / project_root_value).resolve()
@@ -152,6 +167,11 @@ class DatasetReleaseConfig:
             statistics_json=resolve_path("statistics_json"),
             statistics_markdown=resolve_path("statistics_markdown"),
             review_queue=resolve_path("review_queue"),
+            agentic_review_queue=(
+                resolve_path("agentic_review_queue")
+                if "agentic_review_queue" in path_table
+                else None
+            ),
         )
 
         source_values = _required(root, "sources", "config")
@@ -214,6 +234,13 @@ class DatasetReleaseConfig:
         deduplication = DeduplicationSettings(semantic_threshold, variant_threshold)
 
         split_table = _mapping(_required(root, "splits", "config"), "splits")
+        agentic_sources_value = split_table.get("agentic_sources", [])
+        if not isinstance(agentic_sources_value, list) or not all(
+            isinstance(source_id, str) and source_id for source_id in agentic_sources_value
+        ):
+            raise ReleaseConfigError("splits.agentic_sources must be a string array")
+        if len(agentic_sources_value) != len(set(agentic_sources_value)):
+            raise ReleaseConfigError("splits.agentic_sources contains duplicates")
         splits = SplitSettings(
             held_out_source=str(_required(split_table, "held_out_source", "splits")),
             held_out_family=str(_required(split_table, "held_out_family", "splits")),
@@ -225,9 +252,11 @@ class DatasetReleaseConfig:
                 _required(split_table, "notinject_ratios", "splits"),
                 "splits.notinject_ratios",
             ),
+            agentic_sources=tuple(sorted(agentic_sources_value)),
         )
         return cls(
             path=config_path,
+            schema_version=schema_version,
             project_root=project_root,
             identity=identity,
             paths=paths,

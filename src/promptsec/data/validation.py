@@ -32,6 +32,7 @@ _INSTALLED_SCHEMA_PATH = (
 )
 _ANNOTATION_SCHEMA_NAME = "promptsec-annotation-v1.schema.json"
 _DATASET_SCHEMA_NAME = "promptsec-dataset-record-v0.1.schema.json"
+_RELEASE_SCHEMA_NAME = "promptsec-release-record-v0.1.schema.json"
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 
 _VERDICT_AXES = (
@@ -199,6 +200,16 @@ def _build_validator(schema_path: Path) -> Draft202012Validator:
         dataset_resource = Resource.from_contents(dataset)
         registry = registry.with_resource(dataset_id, dataset_resource)
         registry = registry.with_resource(dataset_path.as_uri(), dataset_resource)
+    release_path = profile_path.with_name(_RELEASE_SCHEMA_NAME)
+    if profile_path != release_path and release_path.is_file():
+        release = _load_json_object(release_path)
+        Draft202012Validator.check_schema(release)
+        release_id = release.get("$id")
+        if not isinstance(release_id, str) or not release_id:
+            raise ValueError(f"release schema has no $id: {release_path}")
+        release_resource = Resource.from_contents(release)
+        registry = registry.with_resource(release_id, release_resource)
+        registry = registry.with_resource(release_path.as_uri(), release_resource)
     return Draft202012Validator(
         profile,
         registry=registry,
