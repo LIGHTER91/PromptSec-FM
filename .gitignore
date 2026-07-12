@@ -52,6 +52,13 @@ reports/data_statistics/*
 !reports/data_statistics/*.md
 !reports/source_integration/
 !reports/source_integration/*.md
+!reports/quality_review/
+!reports/quality_review/*.json
+!reports/quality_review/*.md
+reports/quality_review/*.jsonl
+!reports/license_review/
+!reports/license_review/*.json
+!reports/license_review/*.md
 
 # Review queues contain source-derived text and are reconstructed locally.
 reports/label_mapping/**

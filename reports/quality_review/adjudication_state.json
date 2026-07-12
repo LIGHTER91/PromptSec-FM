@@ -1,0 +1,8 @@
+{
+  "disagreements": [],
+  "gold_claim_permitted": false,
+  "human_annotation_files_present": false,
+  "missing_fields": [],
+  "phase_state": "READY_FOR_HUMAN_REVIEW",
+  "schema_version": "0.1"
+}

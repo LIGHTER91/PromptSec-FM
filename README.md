@@ -161,6 +161,28 @@ source caches, snapshots, state dumps, embeddings, or model outputs.
 
 ## Mapping contract
 
+## Phase 3.4 human-review preparation
+
+Phase 3.4 audits the v0.2 corpus, scores review priorities, selects a deterministic
+approximately-500-record candidate set, and creates two blinded annotation packets.
+It does not create gold labels. With no completed human annotation files, the explicit
+state is `READY_FOR_HUMAN_REVIEW`.
+
+```powershell
+python scripts/create_gold_review_packets.py `
+  --config configs/gold_subset_v0.1.yaml `
+  --release data/releases/promptsec-dataset-v0.2 `
+  --output data/review/gold-candidate-v0.1
+python scripts/adjudicate_gold.py `
+  --packet-dir data/review/gold-candidate-v0.1 `
+  --output reports/quality_review/adjudication_state.json
+```
+
+Candidate payloads and researcher manifests remain ignored by Git. Annotators see only
+taxonomy-relevant context and content; source IDs, automatic labels, mappings, clusters,
+and license status remain hidden. Human double annotation and adjudication are required
+before any `GOLD_LOCAL_ONLY` or redistributable state can be claimed.
+
 - Exact upstream objects and labels are retained under
   `metadata.dataset_provenance.source_record`.
 - Corpus acquisition provenance never replaces the frozen scenario-provenance axes

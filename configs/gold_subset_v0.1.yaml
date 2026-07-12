@@ -1,0 +1,9 @@
+schema_version: "0.1"
+release_id: promptsec-dataset-v0.2
+seed: 3401
+target_records: 500
+minimum_source_records: 1
+include_all_sources_with_at_most: 40
+minimum_agentic_records: 120
+minimum_hard_negative_records: 80
+output_dir: data/review/gold-candidate-v0.1

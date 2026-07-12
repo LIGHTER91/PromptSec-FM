@@ -1,0 +1,177 @@
+{
+  "components": [
+    {
+      "final_publication_status": "REDISTRIBUTABLE_WITH_ATTRIBUTION",
+      "license_expression": "MIT",
+      "local_rebuild": "allowed",
+      "metadata_only": "REDISTRIBUTABLE",
+      "raw_payload": "REDISTRIBUTABLE_WITH_ATTRIBUTION",
+      "scope": "AgentDojo repository code and agentdojo 0.1.35 wheel",
+      "source_id": "agentdojo",
+      "transformed_records": "REDISTRIBUTABLE_WITH_ATTRIBUTION"
+    },
+    {
+      "final_publication_status": "BLOCKED_PENDING_REVIEW",
+      "license_expression": "NOASSERTION",
+      "local_rebuild": "allowed",
+      "metadata_only": "REDISTRIBUTABLE",
+      "raw_payload": "BLOCKED_PENDING_REVIEW",
+      "scope": "task PROMPT and GOAL definitions plus suite environment YAML",
+      "source_id": "agentdojo",
+      "transformed_records": "BLOCKED_PENDING_REVIEW"
+    },
+    {
+      "final_publication_status": "LOCAL_REBUILD_ONLY",
+      "license_expression": "NOASSERTION",
+      "local_rebuild": "allowed",
+      "metadata_only": "REDISTRIBUTABLE",
+      "raw_payload": "LOCAL_REBUILD_ONLY",
+      "scope": "PromptSec-FM AgentDojo definition snapshot and derived dataset records",
+      "source_id": "agentdojo",
+      "transformed_records": "LOCAL_REBUILD_ONLY"
+    },
+    {
+      "final_publication_status": "LOCAL_REBUILD_ONLY",
+      "license_expression": "NOASSERTION",
+      "local_rebuild": "allowed",
+      "metadata_only": "REDISTRIBUTABLE",
+      "raw_payload": "LOCAL_REBUILD_ONLY",
+      "scope": "runs/ model-output archives",
+      "source_id": "agentdojo",
+      "transformed_records": "LOCAL_REBUILD_ONLY"
+    },
+    {
+      "final_publication_status": "REDISTRIBUTABLE_WITH_ATTRIBUTION",
+      "license_expression": "MIT",
+      "local_rebuild": "allowed",
+      "metadata_only": "REDISTRIBUTABLE",
+      "raw_payload": "REDISTRIBUTABLE_WITH_ATTRIBUTION",
+      "scope": "repository software outside dataset exceptions",
+      "source_id": "bipia",
+      "transformed_records": "REDISTRIBUTABLE_WITH_ATTRIBUTION"
+    },
+    {
+      "final_publication_status": "REDISTRIBUTABLE_SHARE_ALIKE",
+      "license_expression": "CC-BY-SA-4.0",
+      "local_rebuild": "allowed",
+      "metadata_only": "REDISTRIBUTABLE",
+      "raw_payload": "REDISTRIBUTABLE_SHARE_ALIKE",
+      "scope": "benchmark/table (WikiTableQuestions)",
+      "source_id": "bipia",
+      "transformed_records": "REDISTRIBUTABLE_SHARE_ALIKE"
+    },
+    {
+      "final_publication_status": "REDISTRIBUTABLE_SHARE_ALIKE",
+      "license_expression": "CC-BY-SA-4.0",
+      "local_rebuild": "allowed",
+      "metadata_only": "REDISTRIBUTABLE",
+      "raw_payload": "REDISTRIBUTABLE_SHARE_ALIKE",
+      "scope": "benchmark/code (Stack Exchange excerpts)",
+      "source_id": "bipia",
+      "transformed_records": "REDISTRIBUTABLE_SHARE_ALIKE"
+    },
+    {
+      "final_publication_status": "REDISTRIBUTABLE_WITH_ATTRIBUTION",
+      "license_expression": "MIT",
+      "local_rebuild": "allowed",
+      "metadata_only": "REDISTRIBUTABLE",
+      "raw_payload": "REDISTRIBUTABLE_WITH_ATTRIBUTION",
+      "scope": "benchmark/email (OpenAI Evals invoices)",
+      "source_id": "bipia",
+      "transformed_records": "REDISTRIBUTABLE_WITH_ATTRIBUTION"
+    },
+    {
+      "final_publication_status": "LOCAL_REBUILD_ONLY",
+      "license_expression": "NOASSERTION",
+      "local_rebuild": "allowed",
+      "metadata_only": "REDISTRIBUTABLE",
+      "raw_payload": "LOCAL_REBUILD_ONLY",
+      "scope": "benchmark/qa (NewsQA) and benchmark/abstract (XSum)",
+      "source_id": "bipia",
+      "transformed_records": "LOCAL_REBUILD_ONLY"
+    },
+    {
+      "final_publication_status": "BLOCKED_PENDING_REVIEW",
+      "license_expression": "NOASSERTION",
+      "local_rebuild": "allowed",
+      "metadata_only": "REDISTRIBUTABLE",
+      "raw_payload": "BLOCKED_PENDING_REVIEW",
+      "scope": "benchmark/*_attack_{train,test}.json",
+      "source_id": "bipia",
+      "transformed_records": "BLOCKED_PENDING_REVIEW"
+    },
+    {
+      "final_publication_status": "REDISTRIBUTABLE_WITH_ATTRIBUTION",
+      "license_expression": "MIT",
+      "local_rebuild": "allowed",
+      "metadata_only": "REDISTRIBUTABLE",
+      "raw_payload": "REDISTRIBUTABLE_WITH_ATTRIBUTION",
+      "scope": "repository software and documentation",
+      "source_id": "injecagent",
+      "transformed_records": "REDISTRIBUTABLE_WITH_ATTRIBUTION"
+    },
+    {
+      "final_publication_status": "BLOCKED_PENDING_REVIEW",
+      "license_expression": "NOASSERTION",
+      "local_rebuild": "allowed",
+      "metadata_only": "REDISTRIBUTABLE",
+      "raw_payload": "BLOCKED_PENDING_REVIEW",
+      "scope": "user, attacker, and synthesized test-case files consumed by the importer",
+      "source_id": "injecagent",
+      "transformed_records": "BLOCKED_PENDING_REVIEW"
+    },
+    {
+      "final_publication_status": "LOCAL_REBUILD_ONLY",
+      "license_expression": "NOASSERTION",
+      "local_rebuild": "allowed",
+      "metadata_only": "REDISTRIBUTABLE",
+      "raw_payload": "LOCAL_REBUILD_ONLY",
+      "scope": "tools.json, attacker_simulated_responses.json, and externally hosted model outputs",
+      "source_id": "injecagent",
+      "transformed_records": "LOCAL_REBUILD_ONLY"
+    },
+    {
+      "final_publication_status": "REDISTRIBUTABLE_WITH_ATTRIBUTION",
+      "license_expression": "MIT",
+      "local_rebuild": "allowed",
+      "metadata_only": "REDISTRIBUTABLE",
+      "raw_payload": "REDISTRIBUTABLE_WITH_ATTRIBUTION",
+      "scope": "NotInject_one, NotInject_two, and NotInject_three (339 benign prompts)",
+      "source_id": "notinject",
+      "transformed_records": "REDISTRIBUTABLE_WITH_ATTRIBUTION"
+    },
+    {
+      "final_publication_status": "REDISTRIBUTABLE_WITH_ATTRIBUTION",
+      "license_expression": "MIT",
+      "local_rebuild": "allowed",
+      "metadata_only": "REDISTRIBUTABLE",
+      "raw_payload": "REDISTRIBUTABLE_WITH_ATTRIBUTION",
+      "scope": "benchmark harness, task configurations, and system-prompt templates",
+      "source_id": "open_prompt_injection",
+      "transformed_records": "REDISTRIBUTABLE_WITH_ATTRIBUTION"
+    },
+    {
+      "final_publication_status": "LOCAL_REBUILD_ONLY",
+      "license_expression": "NOASSERTION",
+      "local_rebuild": "allowed",
+      "metadata_only": "REDISTRIBUTABLE",
+      "raw_payload": "LOCAL_REBUILD_ONLY",
+      "scope": "datasets dynamically loaded by OpenPromptInjection/tasks",
+      "source_id": "open_prompt_injection",
+      "transformed_records": "LOCAL_REBUILD_ONLY"
+    },
+    {
+      "final_publication_status": "REDISTRIBUTABLE_WITH_ATTRIBUTION",
+      "license_expression": "MIT",
+      "local_rebuild": "allowed",
+      "metadata_only": "REDISTRIBUTABLE",
+      "raw_payload": "REDISTRIBUTABLE_WITH_ATTRIBUTION",
+      "scope": "promptinject/prompt_data.py",
+      "source_id": "promptinject",
+      "transformed_records": "REDISTRIBUTABLE_WITH_ATTRIBUTION"
+    }
+  ],
+  "phase_state": "READY_FOR_HUMAN_REVIEW",
+  "schema_version": "0.1",
+  "technical_evidence_audit_not_legal_advice": true
+}

@@ -1,0 +1,255 @@
+{
+  "phase_state": "READY_FOR_HUMAN_REVIEW",
+  "schema_version": "0.1",
+  "sources": [
+    {
+      "components": [
+        {
+          "final_publication_status": "REDISTRIBUTABLE_WITH_ATTRIBUTION",
+          "license_expression": "MIT",
+          "license_url": "https://github.com/ethz-spylab/agentdojo/blob/a75aba7631d3ca5fb7ab938965c97ead2f9ff84b/LICENSE",
+          "notes": "The root license and package classifier identify the repository software as MIT; retain the copyright and permission notice.",
+          "redistribution": "allowed",
+          "review_date": "2026-07-12",
+          "reviewer_note": "Technical evidence review; not legal advice.",
+          "scope": "AgentDojo repository code and agentdojo 0.1.35 wheel"
+        },
+        {
+          "final_publication_status": "BLOCKED_PENDING_REVIEW",
+          "license_expression": "NOASSERTION",
+          "license_url": "https://github.com/ethz-spylab/agentdojo/blob/a75aba7631d3ca5fb7ab938965c97ead2f9ff84b/LICENSE",
+          "notes": "No separate data-license declaration or third-party data notice was found at the pin; repository-level MIT licensing is not treated as a conclusive data-rights determination for a derived dataset.",
+          "redistribution": "unknown",
+          "review_date": "2026-07-12",
+          "reviewer_note": "Technical evidence review; not legal advice.",
+          "scope": "task PROMPT and GOAL definitions plus suite environment YAML"
+        },
+        {
+          "final_publication_status": "LOCAL_REBUILD_ONLY",
+          "license_expression": "NOASSERTION",
+          "license_url": "https://github.com/ethz-spylab/agentdojo/tree/a75aba7631d3ca5fb7ab938965c97ead2f9ff84b/src/agentdojo/default_suites",
+          "notes": "The snapshot and records reproduce task text and remain local reconstruction artifacts pending an explicit data-rights review.",
+          "redistribution": "not-redistributed",
+          "review_date": "2026-07-12",
+          "reviewer_note": "Technical evidence review; not legal advice.",
+          "scope": "PromptSec-FM AgentDojo definition snapshot and derived dataset records"
+        },
+        {
+          "final_publication_status": "LOCAL_REBUILD_ONLY",
+          "license_expression": "NOASSERTION",
+          "license_url": "https://github.com/ethz-spylab/agentdojo/tree/a75aba7631d3ca5fb7ab938965c97ead2f9ff84b/runs",
+          "notes": "Runtime results are not downloaded, inspected by the importer, included in snapshots, or represented as scientific ground truth.",
+          "redistribution": "not-redistributed",
+          "review_date": "2026-07-12",
+          "reviewer_note": "Technical evidence review; not legal advice.",
+          "scope": "runs/ model-output archives"
+        }
+      ],
+      "evidence_file": "manifests/sources/agentdojo.json",
+      "evidence_sha256": "7fad3368cf6b5ca0b7c8c85c9a5b6263c227afa329cca5e069999d20e82f7fc2",
+      "license_status": "unclear",
+      "source_id": "agentdojo",
+      "upstream": {
+        "homepage": "https://agentdojo.spylab.ai/",
+        "repository": "https://github.com/ethz-spylab/agentdojo.git",
+        "revision": "package:0.1.35; git:a75aba7631d3ca5fb7ab938965c97ead2f9ff84b; benchmark:v1.2.2"
+      }
+    },
+    {
+      "components": [
+        {
+          "final_publication_status": "REDISTRIBUTABLE_WITH_ATTRIBUTION",
+          "license_expression": "MIT",
+          "license_url": "https://github.com/microsoft/BIPIA/blob/a004b69ec0dd446e0afd461d98cb5e96e120a5d0/LICENSE",
+          "notes": "The repository license explicitly excludes the dataset components listed below.",
+          "redistribution": "allowed",
+          "review_date": "2026-07-12",
+          "reviewer_note": "Technical evidence review; not legal advice.",
+          "scope": "repository software outside dataset exceptions"
+        },
+        {
+          "final_publication_status": "REDISTRIBUTABLE_SHARE_ALIKE",
+          "license_expression": "CC-BY-SA-4.0",
+          "license_url": "https://github.com/ppasupat/WikiTableQuestions/blob/master/LICENSE",
+          "notes": "Attribution and ShareAlike obligations apply.",
+          "redistribution": "conditional",
+          "review_date": "2026-07-12",
+          "reviewer_note": "Technical evidence review; not legal advice.",
+          "scope": "benchmark/table (WikiTableQuestions)"
+        },
+        {
+          "final_publication_status": "REDISTRIBUTABLE_SHARE_ALIKE",
+          "license_expression": "CC-BY-SA-4.0",
+          "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+          "notes": "Keep the question URLs and author information present in BIPIA records.",
+          "redistribution": "conditional",
+          "review_date": "2026-07-12",
+          "reviewer_note": "Technical evidence review; not legal advice.",
+          "scope": "benchmark/code (Stack Exchange excerpts)"
+        },
+        {
+          "final_publication_status": "REDISTRIBUTABLE_WITH_ATTRIBUTION",
+          "license_expression": "MIT",
+          "license_url": "https://github.com/openai/evals/blob/main/LICENSE.md",
+          "notes": "Consult the upstream OpenAI Evals source before release.",
+          "redistribution": "allowed",
+          "review_date": "2026-07-12",
+          "reviewer_note": "Technical evidence review; not legal advice.",
+          "scope": "benchmark/email (OpenAI Evals invoices)"
+        },
+        {
+          "final_publication_status": "LOCAL_REBUILD_ONLY",
+          "license_expression": "NOASSERTION",
+          "license_url": "https://github.com/microsoft/BIPIA/blob/a004b69ec0dd446e0afd461d98cb5e96e120a5d0/benchmark/README.md",
+          "notes": "BIPIA requires users to acquire and generate these contexts from the original datasets.",
+          "redistribution": "not-redistributed",
+          "review_date": "2026-07-12",
+          "reviewer_note": "Technical evidence review; not legal advice.",
+          "scope": "benchmark/qa (NewsQA) and benchmark/abstract (XSum)"
+        },
+        {
+          "final_publication_status": "BLOCKED_PENDING_REVIEW",
+          "license_expression": "NOASSERTION",
+          "license_url": "https://github.com/microsoft/BIPIA/blob/a004b69ec0dd446e0afd461d98cb5e96e120a5d0/LICENSE",
+          "notes": "The LICENSE does not classify project-authored attack JSON separately; verify before a redistributed release.",
+          "redistribution": "unknown",
+          "review_date": "2026-07-12",
+          "reviewer_note": "Technical evidence review; not legal advice.",
+          "scope": "benchmark/*_attack_{train,test}.json"
+        }
+      ],
+      "evidence_file": "manifests/sources/bipia.json",
+      "evidence_sha256": "f1f152e2aa8213fe9f48334a7b23853ea0fc410639b70cbfd114acf6d43815a8",
+      "license_status": "multiple",
+      "source_id": "bipia",
+      "upstream": {
+        "homepage": "https://github.com/microsoft/BIPIA",
+        "repository": "https://github.com/microsoft/BIPIA.git",
+        "revision": "a004b69ec0dd446e0afd461d98cb5e96e120a5d0"
+      }
+    },
+    {
+      "components": [
+        {
+          "final_publication_status": "REDISTRIBUTABLE_WITH_ATTRIBUTION",
+          "license_expression": "MIT",
+          "license_url": "https://github.com/uiuc-kang-lab/InjecAgent/blob/f19c9f2c79a41046eb13c03c51a24c567a8ffa07/LICENCE",
+          "notes": "The pinned repository contains an MIT LICENCE file attributed to Qiusi Zhan.",
+          "redistribution": "allowed",
+          "review_date": "2026-07-12",
+          "reviewer_note": "Technical evidence review; not legal advice.",
+          "scope": "repository software and documentation"
+        },
+        {
+          "final_publication_status": "BLOCKED_PENDING_REVIEW",
+          "license_expression": "NOASSERTION",
+          "license_url": "https://github.com/uiuc-kang-lab/InjecAgent/tree/f19c9f2c79a41046eb13c03c51a24c567a8ffa07/data",
+          "notes": "The repository does not declare separate data terms or transitive data provenance; retrieve pinned raw files into the ignored local cache and review before redistribution.",
+          "redistribution": "unknown",
+          "review_date": "2026-07-12",
+          "reviewer_note": "Technical evidence review; not legal advice.",
+          "scope": "user, attacker, and synthesized test-case files consumed by the importer"
+        },
+        {
+          "final_publication_status": "LOCAL_REBUILD_ONLY",
+          "license_expression": "NOASSERTION",
+          "license_url": "https://github.com/uiuc-kang-lab/InjecAgent/blob/f19c9f2c79a41046eb13c03c51a24c567a8ffa07/README.md",
+          "notes": "These artifacts are unnecessary for static import and are deliberately excluded.",
+          "redistribution": "not-redistributed",
+          "review_date": "2026-07-12",
+          "reviewer_note": "Technical evidence review; not legal advice.",
+          "scope": "tools.json, attacker_simulated_responses.json, and externally hosted model outputs"
+        }
+      ],
+      "evidence_file": "manifests/sources/injecagent.json",
+      "evidence_sha256": "783d9d65159a62568bd6a11d54541d4f06e131d84ea91715701c32d14740d7dd",
+      "license_status": "unclear",
+      "source_id": "injecagent",
+      "upstream": {
+        "homepage": "https://github.com/uiuc-kang-lab/InjecAgent",
+        "repository": "https://github.com/uiuc-kang-lab/InjecAgent.git",
+        "revision": "f19c9f2c79a41046eb13c03c51a24c567a8ffa07"
+      }
+    },
+    {
+      "components": [
+        {
+          "final_publication_status": "REDISTRIBUTABLE_WITH_ATTRIBUTION",
+          "license_expression": "MIT",
+          "license_url": "https://huggingface.co/datasets/leolee99/NotInject/blob/847ae76cf8fea5ed325429e569ae8cfef022d2e0/README.md",
+          "notes": "The pipeline reads the official authors' JSON mirror in the MIT-licensed PIGuard repository.",
+          "redistribution": "allowed",
+          "review_date": "2026-07-12",
+          "reviewer_note": "Technical evidence review; not legal advice.",
+          "scope": "NotInject_one, NotInject_two, and NotInject_three (339 benign prompts)"
+        }
+      ],
+      "evidence_file": "manifests/sources/notinject.json",
+      "evidence_sha256": "1202f36633634ad8bfc987a9cac73f84955ad4c4ef651904c6593efaabbde87d",
+      "license_status": "single",
+      "source_id": "notinject",
+      "upstream": {
+        "homepage": "https://huggingface.co/datasets/leolee99/NotInject",
+        "repository": "https://github.com/leolee99/PIGuard.git",
+        "revision": "hf:847ae76cf8fea5ed325429e569ae8cfef022d2e0; github:1b5751e88bf7475acbedfc8eda795ce060307c84"
+      }
+    },
+    {
+      "components": [
+        {
+          "final_publication_status": "REDISTRIBUTABLE_WITH_ATTRIBUTION",
+          "license_expression": "MIT",
+          "license_url": "https://github.com/liu00222/Open-Prompt-Injection/blob/95290f7ce3794c4c52ad3fe8113db2bfcdfe89e0/LICENSE",
+          "notes": "The initial importer consumes only these repository-authored benchmark definitions.",
+          "redistribution": "allowed",
+          "review_date": "2026-07-12",
+          "reviewer_note": "Technical evidence review; not legal advice.",
+          "scope": "benchmark harness, task configurations, and system-prompt templates"
+        },
+        {
+          "final_publication_status": "LOCAL_REBUILD_ONLY",
+          "license_expression": "NOASSERTION",
+          "license_url": "https://github.com/liu00222/Open-Prompt-Injection/tree/95290f7ce3794c4c52ad3fe8113db2bfcdfe89e0/OpenPromptInjection/tasks",
+          "notes": "SST-2/GLUE, SMS Spam, HSOL, JFLEG, Gigaword, and other upstream datasets retain their own terms.",
+          "redistribution": "not-redistributed",
+          "review_date": "2026-07-12",
+          "reviewer_note": "Technical evidence review; not legal advice.",
+          "scope": "datasets dynamically loaded by OpenPromptInjection/tasks"
+        }
+      ],
+      "evidence_file": "manifests/sources/open_prompt_injection.json",
+      "evidence_sha256": "2348add2c1a8d5d03d28738b6c1a5a3ae58f4eae5c1684d9bcb76d7221872ba2",
+      "license_status": "multiple",
+      "source_id": "open_prompt_injection",
+      "upstream": {
+        "homepage": "https://github.com/liu00222/Open-Prompt-Injection",
+        "repository": "https://github.com/liu00222/Open-Prompt-Injection.git",
+        "revision": "95290f7ce3794c4c52ad3fe8113db2bfcdfe89e0"
+      }
+    },
+    {
+      "components": [
+        {
+          "final_publication_status": "REDISTRIBUTABLE_WITH_ATTRIBUTION",
+          "license_expression": "MIT",
+          "license_url": "https://github.com/agencyenterprise/PromptInject/blob/2928a719d5de62d3766226f1b44c51d9570bc530/LICENSE",
+          "notes": "Attack and prompt templates are distributed in the MIT-licensed repository.",
+          "redistribution": "allowed",
+          "review_date": "2026-07-12",
+          "reviewer_note": "Technical evidence review; not legal advice.",
+          "scope": "promptinject/prompt_data.py"
+        }
+      ],
+      "evidence_file": "manifests/sources/promptinject.json",
+      "evidence_sha256": "8f3cb46a22d70385bd45ac9ff7904939b6898ebd4c3ad59e9c6fadafec40668e",
+      "license_status": "single",
+      "source_id": "promptinject",
+      "upstream": {
+        "homepage": "https://github.com/agencyenterprise/PromptInject",
+        "repository": "https://github.com/agencyenterprise/PromptInject.git",
+        "revision": "2928a719d5de62d3766226f1b44c51d9570bc530"
+      }
+    }
+  ],
+  "technical_evidence_audit_not_legal_advice": true
+}
