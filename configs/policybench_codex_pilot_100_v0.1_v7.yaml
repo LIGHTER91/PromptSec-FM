@@ -1,0 +1,93 @@
+schema_version: "0.1"
+release_id: promptsec-policybench-codex-v0.1-pilot-100
+taxonomy_version: "1.0"
+record_schema_version: "0.1"
+seed: 20260715
+generated_at: "2026-07-15T00:00:00Z"
+target_records: 6000
+
+languages:
+  en: 0.5
+  fr: 0.5
+
+domains:
+  banking: 1000
+  email: 1000
+  calendar: 1000
+  file_management: 1000
+  web_and_purchases: 1000
+  persistent_memory: 1000
+
+category_quotas:
+  NO_INSTRUCTION: 0.12
+  ALIGNED_AND_COMPLIANT: 0.13
+  ALIGNED_BUT_POLICY_CONFLICTING: 0.08
+  MISALIGNED_AND_POLICY_CONFLICTING: 0.22
+  MISALIGNED_NOT_POLICY_CONFLICTING: 0.08
+  QUOTED_OR_REPORTED: 0.10
+  HYPOTHETICAL: 0.07
+  SPOOFED_AUTHORITY: 0.08
+  INSUFFICIENT_CONTEXT: 0.06
+  HARD_NEGATIVE_SPECIAL_CASES: 0.06
+
+counterfactual_quotas:
+  POLICY_CHANGE: 0.04
+  USER_GOAL_CHANGE: 0.04
+  SOURCE_ROLE_CHANGE: 0.04
+  AUTHORITY_DELEGATION_CHANGE: 0.04
+  CAPABILITY_CHANGE: 0.04
+  PRESENTATION_CHANGE: 0.04
+
+generation:
+  provider: codex_cli
+  model: "${PROMPTSEC_CODEX_MODEL}"
+  model_revision: null
+  temperature: 0.0
+  max_retries: 4
+  concurrency: 1
+  timeout_seconds: 900
+  max_response_bytes: 1048576
+  records_per_batch: 10
+  reasoning_effort: high
+  ephemeral: true
+  output_schema: strict
+  max_prompt_bytes: 2097152
+  codex_executable: codex
+
+quality:
+  exact_duplicate_rejection: true
+  normalized_duplicate_rejection: true
+  semantic_duplicate_threshold: 0.93
+  require_counterfactual_validation: true
+  require_span_validation: true
+  maximum_candidate_characters: 12000
+  maximum_failed_attempt_log_characters: 65536
+
+split_strategy:
+  seed: 20260715
+  train_ratio: 0.70
+  validation_ratio: 0.15
+  policy_family_ood_ratio: 0.04
+  domain_ood_ratio: 0.03
+  language_ood_ratio: 0.03
+  counterfactual_ratio: 0.05
+  held_out_domain: persistent_memory
+  held_out_language: fr
+  group_fields:
+    - policy_family
+    - scenario_template_family
+    - attack_template_family
+    - counterfactual_group_id
+    - base_generation_family
+    - semantic_duplicate_cluster
+
+paths:
+  policies: data/policybench/policies
+  prompts: prompts/policybench
+  raw_outputs: data/generated/raw/policybench-codex-v0.1-pilot-100-codex-batch-v7-selection-v1
+  accepted_artifacts: data/generated/accepted/policybench-codex-v0.1-pilot-100-codex-batch-v7-selection-v1
+  output: data/generated/policybench-codex-v0.1-pilot-100
+  reports: reports/policybench-codex-v0.1-pilot-100
+  review: data/review/policybench-codex-v0.1-pilot-100-review-smoke
+
+review_sample_size: 600

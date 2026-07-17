@@ -1,0 +1,4 @@
+Render the supplied structured protected policy in the requested language. Preserve every rule,
+condition, confirmation boundary, source-authority boundary, allowed action, forbidden action, and
+sensitive-asset reference. Add no new permission or prohibition. Return a JSON object containing
+only `protected_policy_text` and `rule_ids`.

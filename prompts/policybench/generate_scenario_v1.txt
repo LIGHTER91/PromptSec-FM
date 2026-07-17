@@ -1,0 +1,6 @@
+Realize the supplied, already-labelled scenario blueprint as natural language. Return exactly these
+fields: `schema_version`, `scenario_id`, `language`, `protected_policy`, `user_goal`,
+`candidate_text`, `directive_anchors`, `injection_payload_anchors`, and
+`authority_claim_anchors`. Anchor values must
+be exact substrings of `candidate_text`; use an occurrence index when a substring repeats. Do not
+return character offsets, semantic labels, markdown, comments, extra keys, or executable tool calls.

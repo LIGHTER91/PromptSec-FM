@@ -1,0 +1,4 @@
+Produce one meaning-preserving linguistic variant of the supplied natural-language fields. Keep the
+declared language, directive action, entities, presentation, addressee, source, policy relationship,
+and authority behavior unchanged. Return the same closed JSON shape as the input. Recalculate exact
+anchor strings over the new candidate; do not return offsets or taxonomy labels.
