@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 import os
 import random
 import re
@@ -68,6 +69,14 @@ def _all_files(root: Path) -> list[Path]:
     )
 
 
+def _json_manifest_scalar(value: Any) -> Any:
+    """Keep manifests strict JSON while binary trainer state retains sentinels."""
+
+    if isinstance(value, float) and not math.isfinite(value):
+        return None
+    return value
+
+
 def save_checkpoint_atomic(
     destination: str | Path,
     *,
@@ -118,7 +127,7 @@ def save_checkpoint_atomic(
                 "run_kind": run_kind,
                 "compatibility": dict(compatibility),
                 "trainer_state": {
-                    key: value
+                    key: _json_manifest_scalar(value)
                     for key, value in trainer_state.items()
                     if isinstance(value, (str, int, float, bool, type(None)))
                 },

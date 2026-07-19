@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 
 import pytest
 import torch
@@ -76,7 +77,12 @@ def test_atomic_checkpoint_verification_resume_and_isolation(
         optimizer=optimizer,
         scheduler=scheduler,
         scaler=None,
-        trainer_state={"epoch": 1, "global_step": 1},
+        trainer_state={
+            "epoch": 1,
+            "global_step": 1,
+            "best_validation_score": -math.inf,
+            "best_validation_loss": math.inf,
+        },
         label_mappings={
             "heads": {head: mapping.to_dict() for head, mapping in label_mappings.items()}
         },
@@ -85,7 +91,10 @@ def test_atomic_checkpoint_verification_resume_and_isolation(
         environment={"precision": "fp32"},
         run_kind="SMOKE_TEST",
     )
-    assert verify_checkpoint(checkpoint)["status"] == "COMPLETE"
+    manifest = verify_checkpoint(checkpoint)
+    assert manifest["status"] == "COMPLETE"
+    assert manifest["trainer_state"]["best_validation_score"] is None
+    assert manifest["trainer_state"]["best_validation_loss"] is None
     assert (
         find_latest_compatible_checkpoint(
             tmp_path / "smoke", compatibility=compatibility, run_kind="SMOKE_TEST"
@@ -100,6 +109,8 @@ def test_atomic_checkpoint_verification_resume_and_isolation(
         )
     state = load_training_state(checkpoint, optimizer=optimizer, scheduler=scheduler, scaler=None)
     assert state["global_step"] == 1
+    assert state["best_validation_score"] == -math.inf
+    assert state["best_validation_loss"] == math.inf
     assert not (tmp_path / "full").exists()
 
 
