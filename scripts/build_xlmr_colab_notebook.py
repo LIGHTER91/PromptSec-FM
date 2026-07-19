@@ -440,6 +440,15 @@ def build_notebook() -> Any:
                 shell=False,
             )
 
+            # Editable installs expose ``src`` through a .pth file, which is normally read only
+            # when Python starts. The Colab kernel is already running because pip is invoked in a
+            # subprocess, so make the freshly installed source tree importable immediately.
+            expected_source = (Path(REPO_DIR) / "src").resolve()
+            expected_source_text = str(expected_source)
+            if expected_source_text not in sys.path:
+                sys.path.insert(0, expected_source_text)
+            importlib.invalidate_caches()
+
             distributions = {
                 "promptsec": "promptsec-dataset",
                 "torch": "torch",
@@ -460,7 +469,6 @@ def build_notebook() -> Any:
 
             training_package = importlib.import_module("promptsec.training")
             training_path = Path(training_package.__file__).resolve()
-            expected_source = (Path(REPO_DIR) / "src").resolve()
             if expected_source not in training_path.parents:
                 raise RuntimeError(f"Import promptsec inattendu: {training_path}")
             print("Import promptsec.training vérifié depuis:", training_path)

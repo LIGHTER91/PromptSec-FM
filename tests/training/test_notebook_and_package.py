@@ -154,7 +154,13 @@ def test_notebook_installs_clone_and_only_orchestrates_training_cli() -> None:
     assert '"training" not in optional_groups' in code
     assert '"pip"' in code and '"install"' in code and '"-e"' in code
     assert "editable_target" in code
+    assert "expected_source_text = str(expected_source)" in code
+    assert "sys.path.insert(0, expected_source_text)" in code
+    assert "importlib.invalidate_caches()" in code
     assert "promptsec.training" in code
+    assert code.index("sys.path.insert(0, expected_source_text)") < code.index(
+        'importlib.import_module("promptsec.training")'
+    )
     assert code.count("scripts/train_xlmr_multitask.py") >= 3
     assert '"--smoke-test"' in code
     assert '"--no-resume"' in code

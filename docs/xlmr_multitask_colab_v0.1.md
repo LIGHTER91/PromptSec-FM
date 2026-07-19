@@ -162,7 +162,10 @@ python -m pip install -e ".[training]"
 Avec `INSTALL_DEV_DEPENDENCIES=True`, la cible devient `.[training,dev]`.
 L’absence de `--upgrade` conserve le PyTorch CUDA de Colab s’il satisfait les
 bornes. Les versions runtime sont affichées et `promptsec.training` doit se
-résoudre depuis `/content/PromptSec-FM/src`.
+résoudre depuis `/content/PromptSec-FM/src`. Comme l’installation éditable est
+lancée dans un sous-processus alors que le kernel Colab tourne déjà, la cellule
+ajoute explicitement ce répertoire source au début de `sys.path` et invalide les
+caches d’import ; aucun redémarrage du runtime n’est nécessaire.
 
 ### 7. Vérifier et extraire le dataset
 
