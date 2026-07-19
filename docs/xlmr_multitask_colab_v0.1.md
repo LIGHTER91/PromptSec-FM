@@ -213,7 +213,10 @@ Le CLI ajoute automatiquement `smoke-test/` aux racines:
 ```
 
 Un smoke complet et checksummé avec resume probe PASS est réutilisé. Un état
-partiel est signalé, jamais supprimé silencieusement.
+partiel déclenche `--resume`: le CLI ne restaure qu’un checkpoint complet,
+checksummé et compatible avec le dataset, la configuration et le type de run.
+Un checkpoint incomplet ou incompatible reste bloquant. Rien n’est supprimé
+automatiquement.
 
 ### 9. Activer l’entraînement complet
 

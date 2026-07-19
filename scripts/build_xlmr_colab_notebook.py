@@ -839,8 +839,9 @@ def build_notebook() -> Any:
             """
             Le smoke test appelle le CLI réel avec 32 records train, 16 validation, une époque et
             une longueur 128. Le CLI ajoute lui-même `smoke-test/` aux racines fournies. Une
-            exécution smoke complète et vérifiée est réutilisée; un état partiel n’est jamais
-            écrasé silencieusement.
+            exécution smoke complète et vérifiée est réutilisée. Un état partiel déclenche la
+            reprise sécurisée du CLI: seuls des checkpoints complets, checksummés et compatibles
+            peuvent être restaurés; aucun artefact n’est supprimé automatiquement.
             """,
         ),
         _code(
@@ -883,10 +884,14 @@ def build_notebook() -> Any:
                     print("Smoke test complet déjà présent; réutilisation des artefacts vérifiés.")
                     SMOKE_TEST_PASSED = True
                 else:
-                    if smoke_checkpoint_root.exists() or smoke_report_root.exists():
-                        raise RuntimeError(
-                            "Artefacts smoke partiels présents. Les inspecter/supprimer manuellement "
-                            "avant une nouvelle exécution --no-resume."
+                    smoke_resume_requested = (
+                        smoke_checkpoint_root.exists() or smoke_report_root.exists()
+                    )
+                    if smoke_resume_requested:
+                        smoke_inventory = checkpoint_inventory(smoke_checkpoint_root)
+                        print(
+                            "Artefacts smoke partiels détectés; tentative de reprise sécurisée.",
+                            smoke_inventory,
                         )
                     smoke_command = [
                         sys.executable,
@@ -918,7 +923,7 @@ def build_notebook() -> Any:
                         str(PER_DEVICE_BATCH_SIZE),
                         "--gradient-accumulation-steps",
                         str(GRADIENT_ACCUMULATION_STEPS),
-                        "--no-resume",
+                        "--resume" if smoke_resume_requested else "--no-resume",
                     ]
                     print("Commande smoke:", smoke_command)
                     subprocess.run(smoke_command, cwd=REPO_DIR, check=True, shell=False)

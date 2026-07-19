@@ -164,6 +164,9 @@ def test_notebook_installs_clone_and_only_orchestrates_training_cli() -> None:
     assert code.count("scripts/train_xlmr_multitask.py") >= 3
     assert '"--smoke-test"' in code
     assert '"--no-resume"' in code
+    assert '"--resume" if smoke_resume_requested else "--no-resume"' in code
+    assert "tentative de reprise sécurisée" in code
+    assert "Artefacts smoke partiels présents" not in code
     assert '"--resume" if RESUME else "--no-resume"' in code
     assert 'Path(CHECKPOINT_ROOT) / "smoke-test"' in code
     assert 'Path(REPORT_ROOT) / "smoke-test"' in code
