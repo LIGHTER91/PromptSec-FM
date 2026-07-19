@@ -3,6 +3,7 @@ __pycache__/
 *.py[cod]
 *.egg-info/
 .pytest_cache/
+.pytest-tmp/
 .mypy_cache/
 .ruff_cache/
 .coverage
@@ -67,6 +68,24 @@ reports/quality_review/*.jsonl
 
 # Review queues contain source-derived text and are reconstructed locally.
 reports/label_mapping/**
+
+# Local classical-baseline binaries are reproducible and must never be committed.
+artifacts/
+
+# Colab/Transformer runtime outputs and caches are always local or Drive-owned.
+checkpoints/
+training-reports/
+drive-sync/
+tensorboard/
+tb_logs/
+.hf-cache/
+.huggingface/
+**/.cache/huggingface/
+**/promptsec_data/
+*.safetensors
+*.ckpt
+*.pt
+*.pth
 
 # PolicyBench acquisition artifacts, releases, caches, and review payloads are local.
 # Authored policy catalogues above are the only tracked files under data/policybench.
