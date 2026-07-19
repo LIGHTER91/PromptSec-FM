@@ -1,0 +1,1227 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/LIGHTER91/PromptSec-FM/schemas/promptsec-policybench-record-v0.1.schema.json",
+  "title": "PromptSec-PolicyBench Record v0.1",
+  "description": "Canonical PromptSec-FM dataset record with a PolicyBench lifecycle extension. Generation commands emit only SILVER/PENDING records; the reserved GOLD_HUMAN_CONFIRMED/CONFIRMED state is valid only for an externally human-adjudicated derivative.",
+  "allOf": [
+    {
+      "$ref": "https://github.com/LIGHTER91/PromptSec-FM/schemas/promptsec-dataset-record-v0.1.schema.json"
+    },
+    {
+      "type": "object",
+      "required": [
+        "extensions"
+      ],
+      "properties": {
+        "extensions": {
+          "type": "object",
+          "required": [
+            "policybench_v0_1"
+          ],
+          "properties": {
+            "policybench_v0_1": {
+              "$ref": "#/$defs/policybenchExtension"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "domain": {
+      "enum": [
+        "banking",
+        "email",
+        "calendar",
+        "file_management",
+        "web_and_purchases",
+        "persistent_memory"
+      ]
+    },
+    "language": {
+      "type": "string",
+      "pattern": "^[a-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$"
+    },
+    "category": {
+      "enum": [
+        "NO_INSTRUCTION",
+        "ALIGNED_AND_COMPLIANT",
+        "ALIGNED_BUT_POLICY_CONFLICTING",
+        "MISALIGNED_AND_POLICY_CONFLICTING",
+        "MISALIGNED_NOT_POLICY_CONFLICTING",
+        "QUOTED_OR_REPORTED",
+        "HYPOTHETICAL",
+        "SPOOFED_AUTHORITY",
+        "INSUFFICIENT_CONTEXT",
+        "HARD_NEGATIVE_SPECIAL_CASES"
+      ]
+    },
+    "policyMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "policy_id",
+        "policy_family",
+        "policy_version",
+        "matched_rule_ids",
+        "policy_sha256"
+      ],
+      "properties": {
+        "policy_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$"
+        },
+        "policy_family": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$"
+        },
+        "policy_version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+(?:\\.[0-9]+)?$"
+        },
+        "matched_rule_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Z][A-Z0-9_]*$"
+          },
+          "uniqueItems": true
+        },
+        "policy_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "effective_policy_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "authority_delegation_override": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/authorityDelegationOverride"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "authorityDelegationOverride": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode",
+        "action",
+        "source_role",
+        "base_effect",
+        "effective_effect",
+        "effective_protected_policy_text"
+      ],
+      "properties": {
+        "mode": {
+          "enum": [
+            "CONTROLLED_EFFECTIVE_BOUNDARY",
+            "OMITTED_FOR_INSUFFICIENT_CONTEXT"
+          ]
+        },
+        "action": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Z0-9_]*$"
+        },
+        "source_role": {
+          "type": "string"
+        },
+        "base_effect": {
+          "enum": [
+            "ALLOW_AUTHORITY",
+            "DENY_AUTHORITY",
+            "UNKNOWN"
+          ]
+        },
+        "effective_effect": {
+          "enum": [
+            "ALLOW_AUTHORITY",
+            "DENY_AUTHORITY",
+            "UNKNOWN"
+          ]
+        },
+        "effective_protected_policy_text": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 12000
+        }
+      }
+    },
+    "blueprintMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scenario_blueprint_id",
+        "category",
+        "domain",
+        "language",
+        "scenario_template_family",
+        "attack_template_family",
+        "base_generation_family",
+        "blueprint_sha256"
+      ],
+      "properties": {
+        "scenario_blueprint_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]*$"
+        },
+        "category": {
+          "$ref": "#/$defs/category"
+        },
+        "domain": {
+          "$ref": "#/$defs/domain"
+        },
+        "language": {
+          "$ref": "#/$defs/language"
+        },
+        "scenario_template_family": {
+          "type": "string",
+          "minLength": 1
+        },
+        "attack_template_family": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "base_generation_family": {
+          "type": "string",
+          "minLength": 1
+        },
+        "blueprint_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "counterfactualType": {
+      "enum": [
+        "POLICY_CHANGE",
+        "USER_GOAL_CHANGE",
+        "SOURCE_ROLE_CHANGE",
+        "AUTHORITY_DELEGATION_CHANGE",
+        "CAPABILITY_CHANGE",
+        "PRESENTATION_CHANGE"
+      ]
+    },
+    "changedVariable": {
+      "enum": [
+        "PROTECTED_POLICY",
+        "USER_GOAL",
+        "SOURCE_ROLE",
+        "AUTHORITY_DELEGATION",
+        "AVAILABLE_CAPABILITIES",
+        "INSTRUCTION_PRESENTATION"
+      ]
+    },
+    "invariantField": {
+      "enum": [
+        "policy_id",
+        "policy_rule_ids",
+        "policy_family",
+        "protected_policy",
+        "user_goal",
+        "available_capabilities",
+        "candidate_text",
+        "candidate_directive_semantics",
+        "delivery_mode",
+        "source_role",
+        "content_origin",
+        "ingestion_path",
+        "modality",
+        "source_integrity",
+        "language"
+      ]
+    },
+    "labelField": {
+      "enum": [
+        "instruction_presence",
+        "instruction_presentation",
+        "instruction_addressee",
+        "user_goal_alignment",
+        "protected_policy_alignment",
+        "authority_status",
+        "attack_families",
+        "attack_objectives",
+        "annotation_status",
+        "prompt_injection_verdict"
+      ]
+    },
+    "labelScalar": {
+      "enum": [
+        "NO_INSTRUCTION",
+        "INSTRUCTION_PRESENT",
+        "UNDETERMINED",
+        "OPERATIVE",
+        "QUOTED_OR_REPORTED",
+        "HYPOTHETICAL",
+        "UNKNOWN",
+        "NOT_APPLICABLE",
+        "MODEL_OR_AGENT",
+        "HUMAN",
+        "EXTERNAL_SYSTEM",
+        "ALIGNED",
+        "MISALIGNED",
+        "COMPLIANT",
+        "CONFLICTING",
+        "WITHIN_AUTHORITY",
+        "OUTSIDE_AUTHORITY",
+        "SPOOFED",
+        "CONFIRMED",
+        "INSUFFICIENT_CONTEXT",
+        "DISAGREEMENT",
+        "EXCLUDED",
+        "NOT_DETECTED",
+        "UNCERTAIN",
+        "DETECTED"
+      ]
+    },
+    "labelArray": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "PROMPT_INJECTION",
+          "JAILBREAK",
+          "OTHER_PROMPT_ATTACK",
+          "TASK_HIJACKING",
+          "POLICY_BYPASS",
+          "PROMPT_OR_POLICY_DISCLOSURE",
+          "SENSITIVE_DATA_EXFILTRATION",
+          "UNAUTHORIZED_ACTION",
+          "OUTPUT_OR_DECISION_MANIPULATION",
+          "STATE_OR_MEMORY_MANIPULATION",
+          "AVAILABILITY_DISRUPTION",
+          "SYSTEM_COMPROMISE_OR_MALWARE",
+          "FRAUD_OR_IMPERSONATION",
+          "OTHER"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "labelValue": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/labelScalar"
+        },
+        {
+          "$ref": "#/$defs/labelArray"
+        }
+      ]
+    },
+    "labelChange": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "field",
+        "from",
+        "to"
+      ],
+      "properties": {
+        "field": {
+          "$ref": "#/$defs/labelField"
+        },
+        "from": {
+          "$ref": "#/$defs/labelValue"
+        },
+        "to": {
+          "$ref": "#/$defs/labelValue"
+        }
+      }
+    },
+    "counterfactualMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "counterfactual_group_id",
+        "counterfactual_type",
+        "changed_variable",
+        "parent_scenario_id",
+        "invariant_fields",
+        "expected_label_changes"
+      ],
+      "properties": {
+        "counterfactual_group_id": {
+          "type": "string",
+          "pattern": "^cf_[a-z0-9_-]+$"
+        },
+        "counterfactual_type": {
+          "$ref": "#/$defs/counterfactualType"
+        },
+        "changed_variable": {
+          "$ref": "#/$defs/changedVariable"
+        },
+        "parent_scenario_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]*$"
+        },
+        "invariant_fields": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/invariantField"
+          },
+          "uniqueItems": true
+        },
+    "expected_label_changes": {
+      "type": "array",
+      "minItems": 0,
+          "items": {
+            "$ref": "#/$defs/labelChange"
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "counterfactual_type": {
+                "const": "CAPABILITY_CHANGE"
+              }
+            },
+            "required": [
+              "counterfactual_type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "expected_label_changes": {
+                "maxItems": 0
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "expected_label_changes": {
+                "minItems": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "counterfactual_type": {
+                "const": "POLICY_CHANGE"
+              }
+            },
+            "required": [
+              "counterfactual_type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "changed_variable": {
+                "const": "PROTECTED_POLICY"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "counterfactual_type": {
+                "const": "USER_GOAL_CHANGE"
+              }
+            },
+            "required": [
+              "counterfactual_type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "changed_variable": {
+                "const": "USER_GOAL"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "counterfactual_type": {
+                "const": "SOURCE_ROLE_CHANGE"
+              }
+            },
+            "required": [
+              "counterfactual_type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "changed_variable": {
+                "const": "SOURCE_ROLE"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "counterfactual_type": {
+                "const": "AUTHORITY_DELEGATION_CHANGE"
+              }
+            },
+            "required": [
+              "counterfactual_type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "changed_variable": {
+                "const": "AUTHORITY_DELEGATION"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "counterfactual_type": {
+                "const": "CAPABILITY_CHANGE"
+              }
+            },
+            "required": [
+              "counterfactual_type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "changed_variable": {
+                "const": "AVAILABLE_CAPABILITIES"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "counterfactual_type": {
+                "const": "PRESENTATION_CHANGE"
+              }
+            },
+            "required": [
+              "counterfactual_type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "changed_variable": {
+                "const": "INSTRUCTION_PRESENTATION"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "failedAttempt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "generation_attempt",
+        "generation_timestamp",
+        "raw_generation_sha256",
+        "rejection_reasons"
+      ],
+      "properties": {
+        "generation_attempt": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "generation_timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "raw_generation_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "rejection_reasons": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "usageMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "input_tokens",
+        "output_tokens",
+        "total_tokens",
+        "cost_usd"
+      ],
+      "properties": {
+        "input_tokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "output_tokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "total_tokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "cost_usd": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "cached_input_tokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "reasoning_output_tokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "invocation_duration_seconds": {
+          "type": "number",
+          "minimum": 0
+        },
+        "batch_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "batch_size": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "batch_position": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "exit_status": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "generationMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "generator_provider",
+        "generator_model",
+        "generator_model_revision",
+        "generation_prompt_version",
+        "generation_seed",
+        "generation_temperature",
+        "generation_attempt",
+        "generation_timestamp",
+        "raw_generation_sha256",
+        "blueprint_sha256",
+        "policy_sha256",
+        "validation_status",
+        "failed_attempts",
+        "usage"
+      ],
+      "properties": {
+        "generator_provider": {
+          "type": "string",
+          "minLength": 1
+        },
+        "generator_model": {
+          "type": "string",
+          "minLength": 1
+        },
+        "generator_model_revision": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "generation_prompt_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "generation_seed": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "generation_temperature": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2
+        },
+        "generation_attempt": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "generation_timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "raw_generation_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "blueprint_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "policy_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "validation_status": {
+          "enum": [
+            "PENDING",
+            "PASSED",
+            "FAILED"
+          ]
+        },
+        "failed_attempts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/failedAttempt"
+          }
+        },
+        "usage": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/usageMetadata"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "validationCheck": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "status",
+        "detail"
+      ],
+      "properties": {
+        "name": {
+          "enum": [
+            "STRUCTURE",
+            "LANGUAGE",
+            "DECLARED_ACTION",
+            "SPANS",
+            "AUTHORITY_CLAIM",
+            "LABELS",
+            "POLICY",
+            "COUNTERFACTUAL",
+            "DUPLICATION",
+            "LABEL_LEAKAGE"
+          ]
+        },
+        "status": {
+          "enum": [
+            "PASS",
+            "FAIL",
+            "SKIPPED"
+          ]
+        },
+        "detail": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "validationMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "validator_name",
+        "validator_version",
+        "validated_at",
+        "overall_status",
+        "checks",
+        "rejection_reasons"
+      ],
+      "properties": {
+        "validator_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "validator_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "validated_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "overall_status": {
+          "enum": [
+            "PENDING",
+            "PASSED",
+            "FAILED"
+          ]
+        },
+        "checks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/validationCheck"
+          }
+        },
+        "rejection_reasons": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "overall_status": {
+                "const": "PASSED"
+              }
+            },
+            "required": [
+              "overall_status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "validated_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "checks": {
+                "minItems": 1,
+                "not": {
+                  "contains": {
+                    "properties": {
+                      "status": {
+                        "const": "FAIL"
+                      }
+                    },
+                    "required": [
+                      "status"
+                    ]
+                  }
+                }
+              },
+              "rejection_reasons": {
+                "maxItems": 0
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "overall_status": {
+                "const": "FAILED"
+              }
+            },
+            "required": [
+              "overall_status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "validated_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "checks": {
+                "contains": {
+                  "properties": {
+                    "status": {
+                      "const": "FAIL"
+                    }
+                  },
+                  "required": [
+                    "status"
+                  ]
+                }
+              },
+              "rejection_reasons": {
+                "minItems": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "overall_status": {
+                "const": "PENDING"
+              }
+            },
+            "required": [
+              "overall_status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "validated_at": {
+                "type": "null"
+              },
+              "checks": {
+                "maxItems": 0
+              },
+              "rejection_reasons": {
+                "maxItems": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    "groupingMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "policy_family",
+        "scenario_template_family",
+        "attack_template_family",
+        "base_generation_family",
+        "semantic_duplicate_cluster_id",
+        "split_group_id"
+      ],
+      "properties": {
+        "policy_family": {
+          "type": "string",
+          "minLength": 1
+        },
+        "scenario_template_family": {
+          "type": "string",
+          "minLength": 1
+        },
+        "attack_template_family": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "base_generation_family": {
+          "type": "string",
+          "minLength": 1
+        },
+        "semantic_duplicate_cluster_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "split_group_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "datasetSplit": {
+      "enum": [
+        "train",
+        "validation",
+        "test_policy_family_ood",
+        "test_domain_ood",
+        "test_language_ood",
+        "test_counterfactual",
+        "human_review_candidates",
+        "EXCLUDED"
+      ]
+    },
+    "policybenchExtension": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "data_quality",
+        "human_validation_status",
+        "generation_method",
+        "policy",
+        "blueprint",
+        "counterfactual",
+        "generation",
+        "validation",
+        "grouping",
+        "dataset_split"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": "0.1"
+        },
+        "data_quality": {
+          "enum": [
+            "SILVER_TEMPLATE",
+            "SILVER_GENERATED",
+            "SILVER_VALIDATED",
+            "GOLD_HUMAN_CONFIRMED",
+            "EXCLUDED"
+          ]
+        },
+        "human_validation_status": {
+          "enum": [
+            "PENDING",
+            "IN_REVIEW",
+            "CONFIRMED",
+            "REJECTED"
+          ]
+        },
+        "generation_method": {
+          "enum": [
+            "DETERMINISTIC_TEMPLATE",
+            "LLM_CONTROLLED"
+          ]
+        },
+        "policy": {
+          "$ref": "#/$defs/policyMetadata"
+        },
+        "blueprint": {
+          "$ref": "#/$defs/blueprintMetadata"
+        },
+        "counterfactual": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/counterfactualMetadata"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "generation": {
+          "$ref": "#/$defs/generationMetadata"
+        },
+        "validation": {
+          "$ref": "#/$defs/validationMetadata"
+        },
+        "grouping": {
+          "$ref": "#/$defs/groupingMetadata"
+        },
+        "dataset_split": {
+          "$ref": "#/$defs/datasetSplit"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "data_quality": {
+                "const": "GOLD_HUMAN_CONFIRMED"
+              }
+            },
+            "required": [
+              "data_quality"
+            ]
+          },
+          "then": {
+            "properties": {
+              "human_validation_status": {
+                "const": "CONFIRMED"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "data_quality": {
+                "const": "SILVER_TEMPLATE"
+              }
+            },
+            "required": [
+              "data_quality"
+            ]
+          },
+          "then": {
+            "properties": {
+              "generation_method": {
+                "const": "DETERMINISTIC_TEMPLATE"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "data_quality": {
+                "const": "SILVER_VALIDATED"
+              }
+            },
+            "required": [
+              "data_quality"
+            ]
+          },
+          "then": {
+            "properties": {
+              "generation": {
+                "properties": {
+                  "validation_status": {
+                    "const": "PASSED"
+                  }
+                }
+              },
+              "validation": {
+                "properties": {
+                  "overall_status": {
+                    "const": "PASSED"
+                  }
+                }
+              },
+              "dataset_split": {
+                "not": {
+                  "const": "EXCLUDED"
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "data_quality": {
+                "const": "EXCLUDED"
+              }
+            },
+            "required": [
+              "data_quality"
+            ]
+          },
+          "then": {
+            "properties": {
+              "generation": {
+                "properties": {
+                  "validation_status": {
+                    "const": "FAILED"
+                  }
+                }
+              },
+              "validation": {
+                "properties": {
+                  "overall_status": {
+                    "const": "FAILED"
+                  }
+                }
+              },
+              "dataset_split": {
+                "const": "EXCLUDED"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "dataset_split": {
+                "not": {
+                  "const": "EXCLUDED"
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "generation": {
+                "properties": {
+                  "validation_status": {
+                    "const": "PENDING"
+                  }
+                },
+                "required": [
+                  "validation_status"
+                ]
+              }
+            },
+            "required": [
+              "generation"
+            ]
+          },
+          "then": {
+            "properties": {
+              "validation": {
+                "properties": {
+                  "overall_status": {
+                    "const": "PENDING"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "generation": {
+                "properties": {
+                  "validation_status": {
+                    "const": "PASSED"
+                  }
+                },
+                "required": [
+                  "validation_status"
+                ]
+              }
+            },
+            "required": [
+              "generation"
+            ]
+          },
+          "then": {
+            "properties": {
+              "validation": {
+                "properties": {
+                  "overall_status": {
+                    "const": "PASSED"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "generation": {
+                "properties": {
+                  "validation_status": {
+                    "const": "FAILED"
+                  }
+                },
+                "required": [
+                  "validation_status"
+                ]
+              }
+            },
+            "required": [
+              "generation"
+            ]
+          },
+          "then": {
+            "properties": {
+              "validation": {
+                "properties": {
+                  "overall_status": {
+                    "const": "FAILED"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
