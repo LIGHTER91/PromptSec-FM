@@ -150,11 +150,18 @@ def verdict_diagnostics(
     predictions = probabilities.argmax(axis=1)
     false_positive = np.logical_and(~binary_truth, predictions == detected)
     false_negative = np.logical_and(binary_truth, predictions != detected)
-    precision, recall, thresholds = precision_recall_curve(binary_truth, detected_scores)
-    try:
-        auc = float(roc_auc_score(binary_truth, detected_scores))
-    except ValueError:
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)
+        precision, recall, thresholds = precision_recall_curve(binary_truth, detected_scores)
+    if np.unique(binary_truth).size < 2:
         auc = None
+    else:
+        try:
+            auc = float(roc_auc_score(binary_truth, detected_scores))
+        except ValueError:
+            auc = None
+        if auc is not None and not np.isfinite(auc):
+            auc = None
     hist, edges = np.histogram(detected_scores, bins=np.linspace(0, 1, 11))
     return {
         "false_positive_rate": float(false_positive.sum() / max(1, (~binary_truth).sum())),

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 import numpy as np
 
 from promptsec.training.metrics import (
@@ -31,6 +33,14 @@ def test_multilabel_metrics_thresholds_and_verdict_diagnostics() -> None:
         ["NOT_DETECTED", "DETECTED", "UNCERTAIN"],
     )
     assert diagnostics["false_negative_rate"] == 0.5
+
+    single_class_diagnostics = verdict_diagnostics(
+        [0, 0],
+        np.asarray([[0.8, 0.1, 0.1], [0.7, 0.2, 0.1]]),
+        ["NOT_DETECTED", "DETECTED", "UNCERTAIN"],
+    )
+    assert single_class_diagnostics["roc_auc"] is None
+    json.dumps(single_class_diagnostics, allow_nan=False)
 
 
 def test_core_metric_is_unweighted_head_mean() -> None:
