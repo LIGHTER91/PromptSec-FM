@@ -153,10 +153,13 @@ def load_training_dataset(dataset: str | Path) -> TrainingDatasetBundle:
         if validation["validation_status"] != "PASS":
             raise TrainingDatasetError(f"release validation failed: {validation['errors']}")
     else:
+        source_release_validation = package_manifest.get("source_release_validation", {})
         validation = {
             "validation_status": "PASS",
             "source": "colab_input_manifest",
             "files_checked": len(package_manifest["files"]),
+            "checksums_checked": source_release_validation.get("checksums_checked"),
+            "split_files_checked": source_release_validation.get("split_files_checked"),
         }
     all_records = [record for split in PUBLISHED_SPLITS for record in records_by_split[split]]
     canonical_validation = validate_record_collection(all_records)

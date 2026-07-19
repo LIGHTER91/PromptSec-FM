@@ -1,91 +1,190 @@
-# PromptSec-FM XLM-R multi-task Colab workflow v0.1
+# PromptSec-FM — entraînement XLM-R multi-tâche dans Google Colab
 
-This workflow trains `FacebookAI/xlm-roberta-base` on the immutable 6,000-record
-PromptSec-PolicyBench release. The annotations are synthetic `SILVER_VALIDATED`
-labels, not human Gold truth. Good PolicyBench performance does not prove
-real-world prompt-injection robustness.
+Ce workflow ouvre le notebook depuis GitHub, clone le dépôt complet dans le
+runtime Colab, puis utilise Google Drive uniquement pour les données et sorties
+persistantes. Il ne faut téléverser le dépôt ni dans Colab ni dans Drive.
 
-The default `SCIENTIFIC_EVALUATION` mode trains only on the official `train`
-split. Validation controls early stopping, thresholds, checkpoint selection,
-and model selection. Policy-family, domain, language, and counterfactual tests
-are evaluated once after selection. `human_review_candidates` is never trained
-on in the scientific run, and no random record-level split is created.
+Les 6 000 annotations PolicyBench sont synthétiques et `SILVER_VALIDATED`, pas
+human-Gold. Les scores ne prouvent pas une robustesse en conditions réelles. Le
+mode `SCIENTIFIC_EVALUATION` entraîne uniquement sur le split officiel `train`;
+la validation sélectionne le checkpoint et les tests OOD ne servent jamais à
+la sélection.
 
-## 1. Create the Colab archive locally
+## A. Préparation sur la machine locale
 
-From PowerShell in the repository root:
+### 1. Commit et push du code source vers GitHub
+
+Vérifier les changements et ne jamais ajouter archive, dataset généré,
+checkpoint ou poids de modèle:
 
 ```powershell
-& .\.venv\Scripts\python.exe scripts\package_policybench_for_colab.py `
-  --dataset data\generated\policybench-codex-v0.1 `
-  --output artifacts\colab-input\policybench-codex-v0.1.zip
+git status --short
+git add .gitignore pyproject.toml configs/xlmr_multitask_colab_v0.1.yaml `
+  docs/xlmr_multitask_colab_v0.1.md `
+  notebooks/PromptSec_FM_XLMR_Multitask_Colab.ipynb `
+  scripts/build_xlmr_colab_notebook.py `
+  scripts/package_policybench_for_colab.py `
+  scripts/train_xlmr_multitask.py scripts/evaluate_xlmr_multitask.py `
+  src/promptsec/training tests/training
+git diff --cached --stat
+git commit -m "Add GitHub-first XLM-R Colab workflow"
+git push origin main
 ```
 
-The command validates the complete source release, packages only the seven
-official split views, release metadata, checksum index, and required schemas,
-then checks that the source release remained byte-identical. Existing compatible
-output is reused. Use `--overwrite` only when intentionally replacing it.
+Adapter la branche et la sélection des fichiers au worktree réel. Le workflow
+ne commit et ne push rien automatiquement.
 
-## 2. Locate and upload the files
+### 2. Construire l’archive PolicyBench
 
-The local outputs are:
+Depuis `C:/Users/lulup/Documents/PromptSec-FM`:
 
-- `artifacts\colab-input\policybench-codex-v0.1.zip`
-- `artifacts\colab-input\policybench-codex-v0.1.zip.sha256`
-- `artifacts\colab-input\colab_input_manifest.json`
+```powershell
+& ./.venv/Scripts/python.exe scripts/package_policybench_for_colab.py `
+  --dataset data/generated/policybench-codex-v0.1 `
+  --output artifacts/colab-input/policybench-codex-v0.1.zip
+```
 
-Upload the ZIP and `.sha256` file to:
+La commande valide la release, les 6 000 records et les groupes
+contrefactuels, construit un ZIP déterministe et vérifie que la release source
+reste byte-identique. Une archive compatible est réutilisée; `--overwrite` est
+requis pour la remplacer explicitement.
+
+Fichiers locaux:
 
 ```text
-/content/drive/MyDrive/PromptSec-FM/data/
+artifacts/colab-input/policybench-codex-v0.1.zip
+artifacts/colab-input/policybench-codex-v0.1.zip.sha256
+artifacts/colab-input/colab_input_manifest.json
 ```
 
-The manifest is useful for local audit but is also embedded in the ZIP. Do not
-upload raw attempts, caches, quarantine data, review annotations, credentials,
-model artifacts, or operational logs.
+Hash actuel:
 
-## 3. Open the notebook and select a GPU
+```text
+0ccb70cb1db7c38ad52ba0c395a5b2a62a72d57870ca1af86711037c2e9a59e5
+```
 
-Open `notebooks/PromptSec_FM_XLMR_Multitask_Colab.ipynb` in Colab. Select
-**Runtime → Change runtime type → GPU**. The notebook reports Python, PyTorch,
-Transformers, CUDA, GPU, VRAM, bf16 support, system RAM, and measurable Drive
-space. Full training aborts with an actionable error if CUDA is unavailable; it
-never silently trains XLM-R on CPU.
+Le sidecar reste la source de vérité opérationnelle.
 
-## 4. Configure Drive and repository paths
+### 3. Téléverser uniquement le ZIP et son sidecar dans Drive
 
-Edit the single configuration cell near the top. `DRIVE_ROOT` defaults to:
+```text
+MyDrive/
+└── PromptSec-FM/
+    ├── data/
+    │   ├── policybench-codex-v0.1.zip
+    │   └── policybench-codex-v0.1.zip.sha256
+    ├── checkpoints/
+    └── reports/
+```
+
+Ne pas téléverser le dépôt, les tentatives brutes, caches, credentials,
+quarantaine ou annotations de revue.
+
+## B. Exécution dans Google Colab
+
+### 1. Ouvrir le notebook depuis GitHub
+
+Dans l’onglet **GitHub** de Colab, chercher le dépôt public
+`LIGHTER91/PromptSec-FM`, puis ouvrir:
+
+```text
+notebooks/PromptSec_FM_XLMR_Multitask_Colab.ipynb
+```
+
+Choisir **Runtime → Change runtime type → GPU** avant `Run all`.
+
+### 2. Configurer GitHub et Drive
+
+Valeurs par défaut:
 
 ```python
-/content/drive/MyDrive/PromptSec-FM
+GITHUB_OWNER = "LIGHTER91"
+GITHUB_REPOSITORY = "PromptSec-FM"
+GITHUB_REF = "main"
+REPO_DIR = "/content/PromptSec-FM"
+DRIVE_ROOT = "/content/drive/MyDrive/PromptSec-FM"
+START_FULL_TRAINING = False
 ```
 
-Set `REPO_URL` only when the repository is not already available at
-`/content/PromptSec-FM`. Do not put credentials or private Drive identifiers in
-the notebook. No API key, OpenAI service, Codex process, Ollama server, W&B, or
-MLflow service is required.
+Pour figer le code, remplacer `GITHUB_REF` par un tag ou le SHA exact d’un
+commit poussé. Une branche est mise à jour uniquement par fast-forward; un tag
+ou SHA est checkout en `DETACHED_HEAD`.
 
-## 5. Verify and extract data
+### 3. Préflight GPU
 
-The notebook compares the archive SHA-256 before extraction and rejects path
-traversal entries. It extracts to `/content/promptsec_data`, so training reads
-the fast local Colab disk rather than a compressed Drive file. The loader then
-validates package checksums, exact split counts, canonical IDs, SILVER state,
-label vocabularies, and leakage constraints before downloading the model.
+Le notebook affiche Python, système, PyTorch, Transformers, CUDA, runtime CUDA,
+GPU, VRAM totale/libre, support bf16, RAM et espace Drive mesurable.
 
-## 6. Execute the smoke test
+- VRAM ≥ 15 GiB: batch 8, accumulation 2;
+- 10 ≤ VRAM < 15 GiB: batch 4, accumulation 4;
+- VRAM < 10 GiB: batch 2, accumulation 8.
 
-Leave `RUN_SMOKE_TEST_FIRST = True`. The smoke command uses approximately 32
-training records, 16 validation records, one epoch, and `max_length=128`. It
-checks all nine heads, the backward pass, metrics, atomic checkpoint creation,
-checkpoint reload, and a one-step resume probe. Smoke outputs are isolated under
-`CHECKPOINT_ROOT/smoke-test` and `REPORT_ROOT/smoke-test`; they cannot resume into
-the full run.
+Le batch effectif vaut 16. bf16 est utilisé quand disponible, sinon fp16.
+L’entraînement complet s’arrête sans CUDA. Un smoke CPU exige
+`ALLOW_CPU_SMOKE_TEST=True` et sa vitesse n’est pas représentative.
 
-## 7. Start full scientific training
+### 4. Monter Drive
 
-Leave `TRAINING_MODE = "SCIENTIFIC_EVALUATION"` and set
-`RUN_FULL_TRAINING = True`. The notebook invokes:
+```python
+from google.colab import drive
+drive.mount("/content/drive")
+```
+
+Le notebook crée uniquement `DRIVE_ROOT/data`, `CHECKPOINT_ROOT` et
+`REPORT_ROOT`.
+
+### 5. Cloner ou mettre à jour le dépôt
+
+Premier passage, branche publique par défaut:
+
+```bash
+git clone --branch main --single-branch \
+  https://github.com/LIGHTER91/PromptSec-FM.git \
+  /content/PromptSec-FM
+```
+
+Si le dépôt existe, le notebook vérifie `.git`, l’URL `origin` et un worktree
+propre, fetch `origin`, checkout la ref et applique `merge --ff-only` pour une
+branche. Il refuse de détruire des changements locaux. `FORCE_RECLONE=True`
+supprime uniquement `REPO_DIR` sous `/content`, jamais Drive.
+
+Chemin, branche ou `DETACHED_HEAD`, SHA exact, remote, dernier commit et statut
+du worktree sont affichés. Tous les imports/scripts proviennent de ce clone.
+
+### 6. Installer le dépôt cloné
+
+Après inspection de `pyproject.toml`, le notebook lance sans `--upgrade`:
+
+```bash
+python -m pip install -e ".[training]"
+```
+
+Avec `INSTALL_DEV_DEPENDENCIES=True`, la cible devient `.[training,dev]`.
+L’absence de `--upgrade` conserve le PyTorch CUDA de Colab s’il satisfait les
+bornes. Les versions runtime sont affichées et `promptsec.training` doit se
+résoudre depuis `/content/PromptSec-FM/src`.
+
+### 7. Vérifier et extraire le dataset
+
+Le SHA-256 est lu dans le sidecar puis calculé en streaming. Une divergence
+bloque l’extraction. Le ZIP est extrait sous:
+
+```text
+/content/promptsec_data/policybench-codex-v0.1
+```
+
+Chemins absolus, traversées `..`, sorties de racine et symlinks sont refusés.
+Une extraction compatible est réutilisée après vérification du manifeste et de
+tous ses fichiers. Seule la copie locale éphémère est recréée; le ZIP Drive
+n’est jamais supprimé.
+
+Le loader vérifie 6 000 records, 3 000 EN/3 000 FR, 720 groupes
+contrefactuels, 17 checksums, sept splits, identifiants uniques, isolation
+anti-fuite, taxonomie gelée et état SILVER/PENDING/no-Gold.
+
+### 8. Exécuter le smoke test
+
+Laisser `RUN_SMOKE_TEST_FIRST=True`. Commande effective:
 
 ```bash
 python scripts/train_xlmr_multitask.py \
@@ -95,110 +194,82 @@ python scripts/train_xlmr_multitask.py \
   --reports /content/drive/MyDrive/PromptSec-FM/reports/xlmr-base-multitask-v0.1 \
   --training-mode SCIENTIFIC_EVALUATION \
   --model-name FacebookAI/xlm-roberta-base \
-  --learning-rate 2e-5 \
-  --weight-decay 0.01 \
-  --warmup-ratio 0.10 \
-  --early-stopping-patience 2 \
-  --epochs 4 \
-  --max-length 512 \
-  --seed 20260718 \
+  --smoke-test \
+  --max-train-records 32 --max-validation-records 16 \
+  --epochs 1 --max-length 128 --seed 20260718 \
+  --per-device-batch-size <batch-résolu> \
+  --gradient-accumulation-steps <accumulation-résolue> \
+  --no-resume
+```
+
+Le CLI ajoute automatiquement `smoke-test/` aux racines:
+
+```text
+.../checkpoints/xlmr-base-multitask-v0.1/smoke-test/
+.../reports/xlmr-base-multitask-v0.1/smoke-test/
+```
+
+Un smoke complet et checksummé avec resume probe PASS est réutilisé. Un état
+partiel est signalé, jamais supprimé silencieusement.
+
+### 9. Activer l’entraînement complet
+
+Après succès du smoke test:
+
+```python
+START_FULL_TRAINING = True
+```
+
+Commande complète:
+
+```bash
+python scripts/train_xlmr_multitask.py \
+  --config configs/xlmr_multitask_colab_v0.1.yaml \
+  --dataset /content/promptsec_data/policybench-codex-v0.1 \
+  --output /content/drive/MyDrive/PromptSec-FM/checkpoints/xlmr-base-multitask-v0.1 \
+  --reports /content/drive/MyDrive/PromptSec-FM/reports/xlmr-base-multitask-v0.1 \
+  --training-mode SCIENTIFIC_EVALUATION \
+  --model-name FacebookAI/xlm-roberta-base \
+  --learning-rate 2e-5 --weight-decay 0.01 --warmup-ratio 0.10 \
+  --early-stopping-patience 2 --seed 20260718 \
+  --epochs 4 --max-length 512 \
+  --per-device-batch-size <batch-résolu> \
+  --gradient-accumulation-steps <accumulation-résolue> \
   --resume
 ```
 
-At least 15 GiB VRAM resolves to batch 8 with accumulation 2; 10–15 GiB resolves
-to batch 4 with accumulation 4; lower VRAM resolves to batch 2 with accumulation
-8. The target effective batch size is 16. bf16 is selected only when supported,
-otherwise fp16 is used. Gradient checkpointing, dynamic padding, gradient norm
-1.0, and zero unnecessary dataloader workers are enabled.
+Le CLI conserve sérialisation contexte complet, neuf têtes, troncature par
+sections, pertes multi-tâches, sélection validation, tests officiels, analyses
+contrefactuelles/hard-negative/langue et checkpoints Drive atomiques.
 
-## 8. Safely stop and resume
+### 10. Reprendre après déconnexion
 
-Wait for a checkpoint cell or epoch checkpoint to finish before deliberately
-stopping a session. Checkpoints are written to a temporary sibling directory,
-validated, checksummed, and renamed only after completion. On reconnect, remount
-Drive, rerun setup and verification cells, and execute the same command with
-`--resume`. Complete checkpoints are listed before training. Dataset,
-configuration, label, special-token, and run-kind fingerprints must match.
-Incomplete or incompatible checkpoints are rejected; resume never silently
-restarts at epoch zero.
+Rouvrir depuis GitHub, choisir un GPU, conserver la même configuration et
+exécuter `Run all`. Le clone est remis au même `GITHUB_REF`, l’archive locale
+est revalidée/réextraite, puis `--resume` charge le dernier checkpoint complet
+compatible.
 
-If CUDA runs out of memory, the failed attempt is reported, the cache is
-cleared, batch size is halved, accumulation is doubled, and the run retries once.
-There is no infinite retry loop.
+Manifeste, checksums, dataset, configuration, mappings, tokens spéciaux et type
+de run doivent correspondre. Optimiseur, scheduler, scaler, RNG, époque, step,
+meilleur score et early stopping sont restaurés. Aucun redémarrage silencieux.
 
-## 9. Locate checkpoints and reports
-
-Checkpoints:
+### 11. Inspecter les sorties
 
 ```text
 /content/drive/MyDrive/PromptSec-FM/checkpoints/xlmr-base-multitask-v0.1/
-```
-
-Reports:
-
-```text
+/content/drive/MyDrive/PromptSec-FM/checkpoints/xlmr-base-multitask-v0.1/best_model/
 /content/drive/MyDrive/PromptSec-FM/reports/xlmr-base-multitask-v0.1/
 ```
 
-The selected standalone export is under `best_model/` and includes safetensors,
-tokenizer, section tokens, frozen mappings, thresholds, preprocessing, dataset
-and training fingerprints, validation summary, model card, and checksums. It
-does not include training records.
+Les cellules finales affichent validation, neuf têtes, OOD, contrefactuels,
+négatifs difficiles, comparaison EN/FR, runtime, mémoire GPU, reprise, OOM,
+inventaire/checksums du modèle et commande exacte de reproduction.
 
-## 10. Final SILVER model mode
+## Sécurité et limites
 
-`FINAL_SILVER_MODEL` is disabled by default and requires an explicit
-`final_silver_splits` pool in a separate configuration. Any reused evaluation
-records cease to provide independent test performance and are never reported as
-unbiased. Complete scientific evaluation first and use a separate output path.
-
-## 11. Optional Hugging Face workflow
-
-The notebook exposes an optional interactive login switch but performs no Hub
-upload. It never stores a token. If a user later implements an upload, only the
-selected `best_model` may be uploaded—not the dataset, credentials, raw
-generations, hidden review metadata, or unselected checkpoints.
-
-## 12. Inference
-
-`promptsec.training.inference.PromptSecPredictor` loads the exported directory
-without the original training process. Its `predict()` method accepts one
-canonical context record and returns decoded single-label predictions,
-probabilities, multi-label predictions and probabilities, derived verdict
-information, and model/preprocessing versions.
-
-```python
-from promptsec.training.inference import PromptSecPredictor
-
-predictor = PromptSecPredictor(
-    "/content/drive/MyDrive/PromptSec-FM/checkpoints/"
-    "xlmr-base-multitask-v0.1/best_model"
-)
-result = predictor.predict(
-    {
-        "context": {
-            "protected_policy": "Only act with current-user authorization.",
-            "user_goal": "Summarize the retrieved document.",
-            "available_capabilities": ["READ_DOCUMENT"],
-        },
-        "content": {
-            "text": "The candidate content to classify.",
-            "source_role": "EXTERNAL_CONTENT",
-            "content_origin": "DOCUMENT",
-            "delivery_mode": "INDIRECT",
-            "ingestion_path": "RETRIEVAL",
-            "modality": "TEXT",
-            "source_integrity": "UNVERIFIED",
-        },
-    }
-)
-print(result["derived_verdict"])
-```
-
-## 13. Spans and interpretation
-
-Existing spans remain untouched in the release. Span extraction is a separate
-future model phase and is not approximated by this classifier. Evaluate all
-metrics as synthetic SILVER performance. In particular, English/French gaps are
-descriptive because the official language-OOD split may differ in more than
-language alone.
+- Aucun API key, service OpenAI, Codex, Ollama, W&B ou MLflow n’est requis.
+- Aucun token Hugging Face n’est écrit dans le dépôt ou le notebook.
+- Le dépôt complet est cloné depuis GitHub dans `/content`, jamais dans Drive.
+- Le dataset reste SILVER; aucune promotion Gold n’est effectuée.
+- Aucun split aléatoire n’est créé.
+- `CLEAN_LOCAL_RUNTIME` est désactivé et ne cible jamais Drive par défaut.

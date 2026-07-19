@@ -479,6 +479,7 @@ def main(argv: list[str] | None = None) -> int:
             "parameter_count": parameter_count,
             "best_checkpoint": str(best_checkpoint),
             "thresholds": thresholds,
+            "resume_events": training_result.get("resume_events", []),
             "oom_events": oom_events,
         }
     )
@@ -527,7 +528,11 @@ def main(argv: list[str] | None = None) -> int:
                 "manifest_sha256": bundle.manifest_sha256,
                 "split_hashes": bundle.split_hashes,
             },
-            "training_configuration": training_config,
+            "training_configuration": {
+                **training_config,
+                "training_config_hash": settings.fingerprint(),
+                "source_commit_hash": source_commit_hash,
+            },
             "validation_summary": validation_metrics,
         },
         model_card=model_card,

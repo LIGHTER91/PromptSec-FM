@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import hashlib
+import importlib.util
 import json
+import re
 import zipfile
 from pathlib import Path
 
@@ -70,26 +72,140 @@ def test_colab_package_is_minimal_deterministic_and_source_immutable(tmp_path, m
         assert not any("raw" in name or "quarantine" in name for name in names)
 
 
-def test_checked_in_notebook_is_valid_and_has_required_sections() -> None:
+def _load_builder():
+    path = Path("scripts/build_xlmr_colab_notebook.py").resolve()
+    spec = importlib.util.spec_from_file_location("promptsec_colab_builder", path)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def _checked_notebook():
     path = Path("notebooks/PromptSec_FM_XLMR_Multitask_Colab.ipynb")
     notebook = nbformat.read(path, as_version=4)
     nbformat.validate(notebook)
+    return notebook
+
+
+def _sources(notebook):
     markdown = "\n".join(cell.source for cell in notebook.cells if cell.cell_type == "markdown")
     code = "\n".join(cell.source for cell in notebook.cells if cell.cell_type == "code")
-    for title in (
-        "GPU and runtime preflight",
-        "Dataset archive verification",
-        "Release and split integrity checks",
-        "Tokenization and serialization preview using redacted examples",
-        "Optional small smoke test",
-        "Full training",
-        "Counterfactual evaluation",
-        "Language analysis",
-        "Hard-negative analysis",
-        "Checkpoint export",
+    return markdown, code
+
+
+def test_checked_in_notebook_is_valid_and_has_exact_section_order() -> None:
+    builder = _load_builder()
+    notebook = _checked_notebook()
+    headings = [
+        cell.source.splitlines()[0].removeprefix("## ")
+        for cell in notebook.cells
+        if cell.cell_type == "markdown" and cell.source.startswith("## ")
+    ]
+    assert headings == list(builder.SECTION_TITLES)
+    assert len(notebook.cells) == 51
+
+
+def test_notebook_configuration_is_public_github_first_and_full_run_is_guarded() -> None:
+    notebook = _checked_notebook()
+    _, code = _sources(notebook)
+    configuration = next(
+        cell.source
+        for cell in notebook.cells
+        if cell.cell_type == "code" and "GITHUB_OWNER" in cell.source
+    )
+    assert 'GITHUB_OWNER = "LIGHTER91"' in configuration
+    assert 'GITHUB_REPOSITORY = "PromptSec-FM"' in configuration
+    assert 'GITHUB_REF = "main"' in configuration
+    assert 'REPO_DIR = "/content/PromptSec-FM"' in configuration
+    assert 'DRIVE_ROOT = "/content/drive/MyDrive/PromptSec-FM"' in configuration
+    assert "START_FULL_TRAINING = False" in configuration
+    assert "RUN_SMOKE_TEST_FIRST = True" in configuration
+    assert "https://github.com/{GITHUB_OWNER}" in configuration
+    assert 'git", "clone' in code or '"clone"' in code
+    assert '"--branch"' in code and '"--single-branch"' in code
+    assert '"merge", "--ff-only"' in code
+    assert "FORCE_RECLONE" in code
+    assert "shell=False" in code
+
+
+def test_notebook_drive_sha_and_safe_local_extraction_contract() -> None:
+    notebook = _checked_notebook()
+    _, code = _sources(notebook)
+    assert "/content/drive/MyDrive/PromptSec-FM" in code
+    assert "policybench-codex-v0.1.zip.sha256" not in code
+    assert 'DATA_SHA256_FILE = DATA_ARCHIVE + ".sha256"' in code
+    assert "/content/promptsec_data" in code
+    assert 'iter(lambda: stream.read(chunk_size), b"")' in code
+    assert "EXPECTED_ARCHIVE_SHA256" in code
+    assert "relative.is_absolute()" in code
+    assert '".." in relative.parts' in code
+    assert "stat.S_ISLNK" in code
+    assert "ZIP-slip" in code
+    assert "compatible_local_extraction" in code
+    assert "archive.extractall(local_root)" in code
+    assert "read_bytes()" not in code
+
+
+def test_notebook_installs_clone_and_only_orchestrates_training_cli() -> None:
+    notebook = _checked_notebook()
+    markdown, code = _sources(notebook)
+    assert "pyproject.toml" in code
+    assert '"training" not in optional_groups' in code
+    assert '"pip"' in code and '"install"' in code and '"-e"' in code
+    assert "editable_target" in code
+    assert "promptsec.training" in code
+    assert code.count("scripts/train_xlmr_multitask.py") >= 3
+    assert '"--smoke-test"' in code
+    assert '"--no-resume"' in code
+    assert '"--resume" if RESUME else "--no-resume"' in code
+    assert 'Path(CHECKPOINT_ROOT) / "smoke-test"' in code
+    assert 'Path(REPORT_ROOT) / "smoke-test"' in code
+    for duplicated_training_implementation in (
+        "optimizer.step(",
+        "loss.backward(",
+        "for epoch in range(",
+        "torch.optim.AdamW(",
     ):
-        assert title in markdown
-    assert "FacebookAI/xlm-roberta-base" in code
-    assert "TRAINING_MODE" in code
-    assert "RESUME" in code
-    assert "sha256" in code.lower()
+        assert duplicated_training_implementation not in code
+    assert "SILVER_VALIDATED" in markdown
+    assert "human-Gold" in markdown
+
+
+def test_notebook_embeds_expected_integrity_counts_without_payloads_or_secrets() -> None:
+    notebook = _checked_notebook()
+    markdown, code = _sources(notebook)
+    combined = markdown + "\n" + code
+    for expected in (
+        "train=1012",
+        "validation=242",
+        "test_policy_family_ood=284",
+        "test_domain_ood=491",
+        "test_language_ood=3000",
+        "test_counterfactual=344",
+        "human_review_candidates=627",
+        'counterfactual_groups") != 720',
+        'checksums_checked") != 17',
+        'split_files_checked") != 7',
+    ):
+        assert expected in combined
+    assert "train_test_split" not in combined
+    assert "random_split" not in combined
+    assert "OPENAI_API_KEY" not in combined
+    assert "HF_TOKEN" not in combined
+    assert re.search(r"\bsk-[A-Za-z0-9_-]{20,}", combined) is None
+    assert "pb_banking_" not in combined
+    assert "raw_generation" not in combined
+    assert len(nbformat.writes(notebook)) < 150_000
+
+
+def test_notebook_builder_is_deterministic() -> None:
+    builder = _load_builder()
+    first = builder.build_notebook()
+    second = builder.build_notebook()
+    nbformat.validate(first)
+    nbformat.validate(second)
+    assert nbformat.writes(first) == nbformat.writes(second)
+    assert [cell.id for cell in first.cells] == [
+        f"promptsec-{index:03d}" for index in range(len(first.cells))
+    ]
