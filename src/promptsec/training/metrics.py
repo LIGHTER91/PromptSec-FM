@@ -104,7 +104,25 @@ def multilabel_metrics(
         "per_label_support": {
             label: int(truth[:, index].sum()) for index, label in enumerate(labels)
         },
+        "per_label_predicted_positive_rate": {
+            label: float(predictions[:, index].mean()) for index, label in enumerate(labels)
+        },
+        "per_label_precision_recall_curve": {
+            label: _precision_recall_values(truth[:, index], probabilities[:, index])
+            for index, label in enumerate(labels)
+        },
         "thresholds": thresholds.tolist() if thresholds.ndim else float(thresholds),
+    }
+
+
+def _precision_recall_values(truth: np.ndarray, probabilities: np.ndarray) -> dict[str, Any]:
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)
+        precision, recall, thresholds = precision_recall_curve(truth, probabilities)
+    return {
+        "precision": precision.tolist(),
+        "recall": recall.tolist(),
+        "thresholds": thresholds.tolist(),
     }
 
 
@@ -163,10 +181,22 @@ def verdict_diagnostics(
         if auc is not None and not np.isfinite(auc):
             auc = None
     hist, edges = np.histogram(detected_scores, bins=np.linspace(0, 1, 11))
+    brier = float(np.mean((detected_scores - binary_truth.astype(float)) ** 2))
+    expected_calibration_error = 0.0
+    for lower, upper in zip(edges[:-1], edges[1:], strict=True):
+        selected = (detected_scores >= lower) & (
+            detected_scores <= upper if upper == 1 else detected_scores < upper
+        )
+        if selected.any():
+            expected_calibration_error += float(selected.mean()) * abs(
+                float(detected_scores[selected].mean()) - float(binary_truth[selected].mean())
+            )
     return {
         "false_positive_rate": float(false_positive.sum() / max(1, (~binary_truth).sum())),
         "false_negative_rate": float(false_negative.sum() / max(1, binary_truth.sum())),
         "roc_auc": auc,
+        "brier_score": brier,
+        "expected_calibration_error_10_bins": expected_calibration_error,
         "precision_recall_curve": {
             "precision": precision.tolist(),
             "recall": recall.tolist(),

@@ -36,6 +36,20 @@ REQUIRED_REPORTS = (
     "model_card.md",
 )
 
+V02_ADDITIONAL_REPORTS = (
+    "training_pair_audit.json",
+    "sampling_report.json",
+    "class_weight_report.json",
+    "per_class_metrics.json",
+    "multilabel_prevalence.json",
+    "counterfactual_loss_report.json",
+    "verdict_consistency_report.json",
+    "verdict_decoding_calibration.json",
+    "logical_consistency_results.json",
+    "calibration_results.json",
+    "checkpoint_pruning_manifest.json",
+)
+
 
 def _atomic_text(path: Path, content: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -182,8 +196,12 @@ and two sigmoid multi-label heads. Parameter count: {summary["parameter_count"]:
 
 ## 7. Loss configuration
 
-Mean-reduced weighted cross-entropy per single-label head and mean-reduced `BCEWithLogitsLoss` per
-multi-label head are combined as a weighted mean. Weights derive only from training records.
+Single-label mode: `{settings.get("single_label_loss_mode", "WEIGHTED_CROSS_ENTROPY")}`.
+Multi-label mode: `{settings.get("multilabel_loss_mode", "WEIGHTED_BCE")}`. Per-head losses are
+normalized before their configured weighted mean. Class and positive weights derive only from
+training records. Counterfactual auxiliary weight:
+`{settings.get("counterfactual_loss_weight", 0.0)}`; verdict-consistency weight:
+`{settings.get("verdict_consistency_loss_weight", 0.0)}`.
 
 ## 8. Token length and truncation
 
@@ -196,8 +214,9 @@ See `training_history.json` for total and per-head losses by epoch.
 
 ## 10. Best validation checkpoint
 
-`{summary["training_result"].get("best_checkpoint")}` selected by validation core macro F1 with
-validation loss as tie-breaker.
+`{summary["training_result"].get("best_checkpoint")}` selected by
+`{settings.get("validation_selection_metric", "ORIGINAL_CORE_MACRO_F1")}` with validation loss as
+tie-breaker. Both original core macro F1 and robust validation score remain in training history.
 
 ## 11. Validation metrics
 
@@ -212,6 +231,10 @@ See `test_metrics.json`. Each official test was evaluated once after checkpoint 
 See `counterfactual_results.json` for pairwise, sensitivity, invariance, exact-group, transition,
 and type-specific metrics. Machine-readable lexical-baseline comparisons are descriptive only and
 are included when the existing reports were available; the CPU benchmark was not rerun.
+
+Verdict decoding and validation-only alpha selection are recorded in
+`verdict_decoding_calibration.json`; per-label multilabel thresholds and provenance are recorded in
+`multilabel_thresholds.json`.
 
 ## 14. Hard-negative analysis
 
@@ -271,7 +294,44 @@ def write_completed_reports(reports: str | Path, summary: Mapping[str, Any]) -> 
         },
     )
     write_json(root / "multilabel_thresholds.json", summary["thresholds"])
+    write_json(
+        root / "per_class_metrics.json",
+        {
+            split: {
+                head: values.get("per_class", {})
+                for head, values in metrics.items()
+                if isinstance(values, Mapping) and "per_class" in values
+            }
+            for split, metrics in {"validation": validation, **tests}.items()
+        },
+    )
     write_json(root / "counterfactual_results.json", summary["counterfactual_results"])
+    if "training_pair_audit" in summary:
+        write_json(root / "training_pair_audit.json", summary["training_pair_audit"])
+    write_json(root / "sampling_report.json", summary.get("sampling_report", {}))
+    write_json(
+        root / "counterfactual_loss_report.json",
+        summary.get("counterfactual_loss_report", {}),
+    )
+    write_json(
+        root / "verdict_consistency_report.json",
+        summary.get("verdict_consistency_report", {}),
+    )
+    write_json(
+        root / "verdict_decoding_calibration.json",
+        summary.get("verdict_decoding", {}),
+    )
+    write_json(
+        root / "logical_consistency_results.json",
+        summary.get("logical_consistency_results", {}),
+    )
+    write_json(
+        root / "calibration_results.json",
+        {
+            "multilabel": summary["thresholds"],
+            "verdict": summary.get("verdict_decoding", {}),
+        },
+    )
     if summary.get("lexical_baseline_comparison") is not None:
         write_json(
             root / "lexical_baseline_comparison.json",

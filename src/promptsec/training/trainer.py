@@ -33,6 +33,12 @@ from promptsec.training.dataset import (
 from promptsec.training.evaluation import metrics_from_predictions, predict_dataloader
 from promptsec.training.labels import mappings_fingerprint
 from promptsec.training.losses import compute_training_class_weights
+from promptsec.training.pairing import (
+    PairAwareBatchSampler,
+    category_sampling_weights,
+    counterfactual_auxiliary_loss,
+)
+from promptsec.training.verdict import verdict_consistency_loss
 
 
 def set_deterministic_seed(seed: int) -> None:
@@ -72,6 +78,7 @@ class MultitaskTrainer:
         self.output.mkdir(parents=True, exist_ok=True)
         self.reports.mkdir(parents=True, exist_ok=True)
         train_records = bundle.records_by_split["train"][:max_train_records]
+        self.train_records = train_records
         validation_records = bundle.records_by_split["validation"][:max_validation_records]
         self.train_dataset = PolicyBenchTorchDataset(
             train_records,
@@ -104,6 +111,12 @@ class MultitaskTrainer:
             class_weights=class_weights,
             positive_weights=positive_weights,
             head_weights=settings.head_weights,
+            single_label_loss_mode=settings.single_label_loss_mode,
+            multilabel_loss_mode=settings.multilabel_loss_mode,
+            focal_gamma=settings.focal_gamma,
+            gamma_positive=settings.gamma_positive,
+            gamma_negative=settings.gamma_negative,
+            probability_clip=settings.probability_clip,
         )
         self.class_weights = {head: value.tolist() for head, value in class_weights.items()}
         self.positive_weights = {head: value.tolist() for head, value in positive_weights.items()}
@@ -119,21 +132,54 @@ class MultitaskTrainer:
             "model_name": settings.model_name,
             "special_tokens": list(self.model.config.special_tokens),
         }
+        if settings.require_source_commit_match:
+            self.compatibility["source_commit_hash"] = environment.get("source_commit_hash")
         self.history: list[dict[str, Any]] = []
         self.resume_events: list[dict[str, Any]] = []
 
     def _dataloaders(self, train_epoch: int = 0) -> tuple[DataLoader, DataLoader]:
         collator = MultitaskCollator(self.tokenizer)
         generator = torch.Generator().manual_seed(self.settings.seed + train_epoch)
-        train = DataLoader(
-            self.train_dataset,
-            batch_size=int(self.settings.per_device_batch_size),
-            shuffle=True,
-            collate_fn=collator,
-            num_workers=self.settings.num_workers,
-            pin_memory=torch.cuda.is_available(),
-            generator=generator,
-        )
+        if self.settings.use_pair_aware_sampler or self.settings.use_category_balancing:
+            weights = category_sampling_weights(
+                self.train_records,
+                enabled=self.settings.use_category_balancing,
+                maximum_multiplier=self.settings.maximum_category_oversampling_multiplier,
+            )
+            sampler = PairAwareBatchSampler(
+                self.train_records,
+                batch_size=int(self.settings.per_device_batch_size),
+                counterfactual_batch_fraction=(
+                    self.settings.counterfactual_batch_fraction
+                    if self.settings.use_pair_aware_sampler
+                    else 0.0
+                ),
+                seed=self.settings.seed,
+                epoch=train_epoch,
+                category_weights=weights,
+            )
+            train = DataLoader(
+                self.train_dataset,
+                batch_sampler=sampler,
+                collate_fn=collator,
+                num_workers=self.settings.num_workers,
+                pin_memory=torch.cuda.is_available(),
+            )
+            self.sampling_report = sampler.report()
+        else:
+            train = DataLoader(
+                self.train_dataset,
+                batch_size=int(self.settings.per_device_batch_size),
+                shuffle=True,
+                collate_fn=collator,
+                num_workers=self.settings.num_workers,
+                pin_memory=torch.cuda.is_available(),
+                generator=generator,
+            )
+            self.sampling_report = {
+                "method": "v0.1 deterministic random shuffle",
+                "records": len(self.train_dataset),
+            }
         validation = DataLoader(
             self.validation_dataset,
             batch_size=int(self.settings.per_device_batch_size),
@@ -291,6 +337,34 @@ class MultitaskTrainer:
                         attention_mask=batch["attention_mask"].to(self.device),
                         labels=labels,
                     )
+                    if self.settings.counterfactual_loss_weight > 0:
+                        auxiliary, auxiliary_heads = counterfactual_auxiliary_loss(
+                            output.logits,
+                            labels,
+                            batch["metadata"],
+                            margin=self.settings.counterfactual_margin,
+                            invariant_weight=self.settings.invariant_loss_weight,
+                            expected_change_weight=self.settings.expected_change_loss_weight,
+                            mappings=self.bundle.mappings,
+                        )
+                        output.loss = (
+                            output.loss + self.settings.counterfactual_loss_weight * auxiliary
+                        )
+                        output.head_losses.update(
+                            {
+                                f"counterfactual/{head}": value
+                                for head, value in auxiliary_heads.items()
+                            }
+                        )
+                    if self.settings.verdict_consistency_loss_weight > 0:
+                        consistency, _ = verdict_consistency_loss(
+                            output.logits, labels, self.bundle.mappings
+                        )
+                        output.loss = (
+                            output.loss
+                            + self.settings.verdict_consistency_loss_weight * consistency
+                        )
+                        output.head_losses["verdict_consistency"] = consistency
                     loss = output.loss / int(self.settings.gradient_accumulation_steps)
                 scaler.scale(loss).backward()
                 epoch_loss.append(float(output.loss.detach().cpu()))
@@ -334,7 +408,55 @@ class MultitaskTrainer:
                 validation_predictions, self.bundle.mappings, self.thresholds
             )
             validation_loss = float(np.mean(list(validation_metrics["per_head_loss"].values())))
-            score = float(validation_metrics["core_macro_f1"])
+            original_score = float(validation_metrics["core_macro_f1"])
+            score = original_score
+            robust_details = None
+            if self.settings.validation_selection_metric == "ROBUST_VALIDATION_SCORE":
+                from promptsec.training.calibration import robust_validation_score
+                from promptsec.training.counterfactual_evaluation import (
+                    evaluate_counterfactual_predictions,
+                )
+                from promptsec.training.hard_negative_evaluation import hard_negative_results
+
+                hard = hard_negative_results(
+                    self.bundle.records_by_split["validation"][: len(self.validation_dataset)],
+                    validation_predictions,
+                    self.bundle.mappings["prompt_injection_verdict"],
+                    split="validation",
+                )
+                hard_rates = [
+                    values["false_positive_rate"]
+                    for categories in hard.get("by_language_and_category", {}).values()
+                    for values in categories.values()
+                ]
+                validation_cf = evaluate_counterfactual_predictions(
+                    self.bundle.records_by_split["validation"][: len(self.validation_dataset)],
+                    validation_predictions,
+                    self.bundle.mappings,
+                    self.thresholds,
+                )
+                sensitivities = [
+                    values.get("expected_change_sensitivity")
+                    for values in validation_cf.values()
+                    if isinstance(values, Mapping)
+                    and values.get("expected_change_sensitivity") is not None
+                ]
+                multilabel = [
+                    validation_metrics[head]["macro_f1"]
+                    for head in ("attack_families", "attack_objectives")
+                ]
+                robust_details = robust_validation_score(
+                    original_core_macro_f1=original_score,
+                    verdict_macro_f1=validation_metrics["prompt_injection_verdict"]["macro_f1"],
+                    hard_negative_false_positive_rate=(
+                        float(np.mean(hard_rates)) if hard_rates else 0.0
+                    ),
+                    counterfactual_sensitivity=(
+                        float(np.mean(sensitivities)) if sensitivities else None
+                    ),
+                    multilabel_macro_f1=float(np.mean(multilabel)),
+                )
+                score = float(robust_details["robust_validation_score"])
             improved = score > best_score or (
                 math.isclose(score, best_score) and validation_loss < best_loss
             )
@@ -352,7 +474,15 @@ class MultitaskTrainer:
                     head: float(np.mean(values)) for head, values in head_losses.items()
                 },
                 "validation_loss": validation_loss,
-                "validation_core_macro_f1": score,
+                "validation_core_macro_f1": original_score,
+                "validation_selection_score": score,
+                "original_core_macro_f1": original_score,
+                "robust_validation_score": (
+                    robust_details["robust_validation_score"]
+                    if robust_details is not None
+                    else None
+                ),
+                "robust_validation": robust_details,
                 "validation_head_metrics": validation_metrics,
                 "selected_as_best": improved,
             }
@@ -398,6 +528,7 @@ class MultitaskTrainer:
             "peak_gpu_memory_bytes": peak_gpu,
             "resume_events": self.resume_events,
             "history": self.history,
+            "sampling_report": self.sampling_report,
         }
 
     def verify_resume_probe(self, checkpoint: str | Path) -> dict[str, Any]:

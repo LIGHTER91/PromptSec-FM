@@ -35,5 +35,19 @@ def compare_language_metrics(
                 label: values["f1"] - fr_classes[label]["f1"]
                 for label, values in en_classes.items()
             }
+        if head == "prompt_injection_verdict":
+            en_calibration = english[head].get("verdict_diagnostics", {})
+            fr_calibration = french[head].get("verdict_diagnostics", {})
+            item["calibration_en_vs_fr"] = {
+                metric: {
+                    "english": en_calibration.get(metric),
+                    "french": fr_calibration.get(metric),
+                }
+                for metric in ("brier_score", "expected_calibration_error_10_bins")
+            }
+        if head in {"authority_status", "user_goal_alignment"}:
+            item["terminology_or_relation_error_diagnostic"] = item.get(
+                "class_f1_difference_en_minus_fr", {}
+            )
         result["heads"][head] = item
     return result

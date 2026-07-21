@@ -229,7 +229,20 @@ def checkpoint_inventory(root: str | Path) -> dict[str, Any]:
     for path in sorted(Path(root).glob("checkpoint-*")) if Path(root).is_dir() else []:
         try:
             manifest = verify_checkpoint(path)
-            items.append({"path": str(path), "status": "COMPLETE", "manifest": manifest})
+            size = sum(item.stat().st_size for item in path.rglob("*") if item.is_file())
+            items.append(
+                {
+                    "path": str(path),
+                    "status": "COMPLETE",
+                    "size_bytes": size,
+                    "manifest": manifest,
+                }
+            )
         except IncompleteCheckpointError as error:
             items.append({"path": str(path), "status": "INCOMPLETE", "error": str(error)})
-    return {"checkpoints": items}
+    return {
+        "checkpoints": items,
+        "total_complete_size_bytes": sum(
+            item.get("size_bytes", 0) for item in items if item["status"] == "COMPLETE"
+        ),
+    }

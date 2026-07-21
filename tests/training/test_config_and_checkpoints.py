@@ -69,6 +69,7 @@ def test_atomic_checkpoint_verification_resume_and_isolation(
     compatibility = {
         "dataset_manifest_sha256": "a" * 64,
         "training_config_hash": "b" * 64,
+        "source_commit_hash": "commit-v0.2-current",
     }
     checkpoint = save_checkpoint_atomic(
         tmp_path / "smoke" / "checkpoint-00000001",
@@ -105,6 +106,12 @@ def test_atomic_checkpoint_verification_resume_and_isolation(
         find_latest_compatible_checkpoint(
             tmp_path / "smoke",
             compatibility={**compatibility, "training_config_hash": "c" * 64},
+            run_kind="SMOKE_TEST",
+        )
+    with pytest.raises(IncompatibleCheckpointError):
+        find_latest_compatible_checkpoint(
+            tmp_path / "smoke",
+            compatibility={**compatibility, "source_commit_hash": "old-smoke-commit"},
             run_kind="SMOKE_TEST",
         )
     state = load_training_state(checkpoint, optimizer=optimizer, scheduler=scheduler, scaler=None)

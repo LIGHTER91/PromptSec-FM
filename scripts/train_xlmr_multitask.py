@@ -49,8 +49,20 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--dataset", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--reports", type=Path, required=True)
-    parser.add_argument("--resume", action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument("--resume", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--smoke-test", action="store_true")
+    parser.add_argument(
+        "--reset-smoke-test",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+    )
+    parser.add_argument("--experiment", choices=("balanced", "relational", "focal"))
+    parser.add_argument("--v0-1-report-root", type=Path)
+    parser.add_argument(
+        "--prune-checkpoints",
+        action="store_true",
+        help="Apply checksum-gated v0.2 pruning after export (default is dry-run).",
+    )
     parser.add_argument("--max-train-records", type=_positive)
     parser.add_argument("--max-validation-records", type=_positive)
     parser.add_argument("--epochs", type=_positive)
@@ -65,7 +77,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--early-stopping-patience", type=int)
     parser.add_argument(
         "--training-mode",
-        choices=("SCIENTIFIC_EVALUATION", "FINAL_SILVER_MODEL"),
+        choices=(
+            "SCIENTIFIC_EVALUATION",
+            "FINAL_SILVER_MODEL",
+            "BILINGUAL_FINAL_SILVER_MODEL",
+        ),
     )
     parser.add_argument("--checkpoint", type=Path)
     parser.add_argument("--evaluate-only", action="store_true")
@@ -101,6 +117,44 @@ def _settings_with_overrides(settings: Any, args: argparse.Namespace) -> Any:
     }
     return dataclasses.replace(
         settings, **{key: value for key, value in values.items() if value is not None}
+    )
+
+
+def _experiment_settings(settings: Any, experiment: str | None) -> Any:
+    if experiment is None:
+        return settings
+    common = {
+        "experiment_name": experiment,
+        "use_category_balancing": True,
+        "per_label_thresholds": True,
+        "optimize_multilabel_thresholds_on_validation": True,
+    }
+    if experiment == "balanced":
+        return dataclasses.replace(
+            settings,
+            **common,
+            use_pair_aware_sampler=False,
+            counterfactual_loss_weight=0.0,
+            verdict_consistency_loss_weight=0.0,
+            verdict_decoding_strategy="DIRECT_HEAD",
+            calibrate_hybrid_alpha_on_validation=False,
+            multilabel_loss_mode="WEIGHTED_BCE",
+        )
+    if experiment == "relational":
+        return dataclasses.replace(
+            settings,
+            **common,
+            use_pair_aware_sampler=True,
+            counterfactual_loss_weight=max(0.25, settings.counterfactual_loss_weight),
+            verdict_consistency_loss_weight=max(0.20, settings.verdict_consistency_loss_weight),
+            verdict_decoding_strategy="VALIDATION_CALIBRATED_HYBRID",
+            calibrate_hybrid_alpha_on_validation=True,
+            multilabel_loss_mode="WEIGHTED_BCE",
+        )
+    return dataclasses.replace(
+        _experiment_settings(settings, "relational"),
+        experiment_name="focal",
+        multilabel_loss_mode="ASYMMETRIC_FOCAL_BCE",
     )
 
 
@@ -176,6 +230,7 @@ def main(argv: list[str] | None = None) -> int:
     from promptsec.policybench.io import write_json
     from promptsec.training.checkpoints import checkpoint_inventory, verify_checkpoint
     from promptsec.training.colab_config import (
+        BILINGUAL_FINAL_SILVER_MODEL,
         FINAL_SILVER_MODEL,
         environment_preflight,
         load_training_config,
@@ -192,6 +247,12 @@ def main(argv: list[str] | None = None) -> int:
         load_training_dataset,
         summarize_truncation,
     )
+    from promptsec.training.diagnostics_v02 import (
+        class_and_multilabel_audit,
+        logical_consistency_results,
+        v01_diagnostic_audit,
+        write_cross_version_comparison,
+    )
     from promptsec.training.evaluation import (
         metrics_from_predictions,
         predict_dataloader,
@@ -202,6 +263,7 @@ def main(argv: list[str] | None = None) -> int:
     from promptsec.training.language_evaluation import compare_language_metrics
     from promptsec.training.metrics import select_multilabel_thresholds
     from promptsec.training.multitask_model import PromptSecMultitaskModel
+    from promptsec.training.pairing import audit_counterfactual_groups
     from promptsec.training.reporting import (
         build_model_card,
         export_best_model,
@@ -211,7 +273,17 @@ def main(argv: list[str] | None = None) -> int:
     from promptsec.training.serialization import SPECIAL_TOKENS
     from promptsec.training.trainer import MultitaskTrainer
 
-    settings = _settings_with_overrides(load_training_config(args.config), args)
+    settings = _experiment_settings(
+        _settings_with_overrides(load_training_config(args.config), args), args.experiment
+    )
+    if args.v0_1_report_root is not None:
+        settings = dataclasses.replace(settings, v0_1_report_root=str(args.v0_1_report_root))
+    if args.prune_checkpoints:
+        settings = dataclasses.replace(settings, checkpoint_pruning_dry_run=False)
+    if args.resume is None:
+        args.resume = not (args.smoke_test and settings.schema_version == "0.2")
+    if args.reset_smoke_test is None:
+        args.reset_smoke_test = args.smoke_test and settings.schema_version == "0.2"
     if args.smoke_test:
         settings = dataclasses.replace(
             settings,
@@ -223,13 +295,18 @@ def main(argv: list[str] | None = None) -> int:
         args.max_validation_records = args.max_validation_records or 16
         args.output = args.output / "smoke-test"
         args.reports = args.reports / "smoke-test"
+        if args.reset_smoke_test:
+            from promptsec.training.retention import reset_isolated_smoke_directories
+
+            reset_isolated_smoke_directories((args.output, args.reports))
     settings.validate()
     bundle = load_training_dataset(args.dataset)
-    if settings.training_mode == FINAL_SILVER_MODEL:
+    final_modes = {FINAL_SILVER_MODEL, BILINGUAL_FINAL_SILVER_MODEL}
+    if settings.training_mode in final_modes:
         selected = settings.final_silver_splits
         invalid = set(selected).difference(bundle.records_by_split)
         if invalid:
-            raise ValueError(f"unknown FINAL_SILVER_MODEL pool splits: {sorted(invalid)}")
+            raise ValueError(f"unknown final SILVER pool splits: {sorted(invalid)}")
         records_by_split = dict(bundle.records_by_split)
         records_by_split["train"] = [
             record for split in selected for record in bundle.records_by_split[split]
@@ -255,7 +332,8 @@ def main(argv: list[str] | None = None) -> int:
         ),
     }
     run_manifest = {
-        "schema_version": "0.1",
+        "schema_version": settings.schema_version,
+        "experiment_name": settings.experiment_name,
         "run_kind": "SMOKE_TEST" if args.smoke_test else settings.training_mode,
         "dataset": str(bundle.root),
         "dataset_manifest_sha256": bundle.manifest_sha256,
@@ -265,12 +343,12 @@ def main(argv: list[str] | None = None) -> int:
         "source_commit_hash": source_commit_hash,
         "resolved_batch_strategy": resolved_strategy,
         "selection_split": "validation",
-        "selection_metric": "core_macro_f1",
+        "selection_metric": settings.validation_selection_metric,
         "test_used_for_selection": False,
         "truth_status": "SYNTHETIC_SILVER_NOT_HUMAN_GOLD",
         "final_silver_warning": (
             "No independent evaluation remains for any split reused in FINAL_SILVER_MODEL."
-            if settings.training_mode == FINAL_SILVER_MODEL
+            if settings.training_mode in final_modes
             else None
         ),
         "full_local_training_permitted": False,
@@ -282,6 +360,17 @@ def main(argv: list[str] | None = None) -> int:
         integrity=bundle.integrity_report,
         split_audit=bundle.split_audit,
     )
+    pair_audit = audit_counterfactual_groups(bundle.records_by_split)
+    write_json(args.reports / "training_pair_audit.json", pair_audit)
+    prevalence = {
+        split: class_and_multilabel_audit(
+            bundle.records_by_split[split], bundle.mappings, split_name=split
+        )
+        for split in ("train", "validation")
+    }
+    write_json(args.reports / "multilabel_prevalence.json", prevalence)
+    v01_audit = v01_diagnostic_audit(settings.v0_1_report_root)
+    write_json(args.reports / "v0_1_diagnostic_audit.json", v01_audit)
     write_json(args.reports / "effective_training_config.json", settings.as_dict())
     write_json(args.reports / "checkpoint_inventory.json", checkpoint_inventory(args.output))
     tokenizer_source: str | Path = settings.model_name
@@ -316,10 +405,24 @@ def main(argv: list[str] | None = None) -> int:
         output=args.output,
         reports=args.reports,
         environment=environment,
-        resume=args.resume,
+        resume=bool(args.resume),
         smoke_test=args.smoke_test,
         max_train_records=args.max_train_records,
         max_validation_records=args.max_validation_records,
+    )
+    write_json(
+        args.reports / "class_weight_report.json",
+        {
+            "single_label": {
+                head: dict(zip(bundle.mappings[head].labels, values, strict=True))
+                for head, values in trainer.class_weights.items()
+            },
+            "multilabel_pos_weight": {
+                head: dict(zip(bundle.mappings[head].labels, values, strict=True))
+                for head, values in trainer.positive_weights.items()
+            },
+            "training_records_only": True,
+        },
     )
     oom_events: list[dict[str, Any]] = []
     if args.evaluate_only:
@@ -384,6 +487,7 @@ def main(argv: list[str] | None = None) -> int:
     validation_predictions, validation_dataset = predict_split(
         "validation", args.max_validation_records if args.smoke_test else None
     )
+    direct_predictions_by_split: dict[str, Any] = {"validation": validation_predictions}
     thresholds: dict[str, Any] = {
         "methodology": "fixed global 0.5 selected before test evaluation",
         "selection_split": "validation",
@@ -393,21 +497,94 @@ def main(argv: list[str] | None = None) -> int:
     if settings.optimize_multilabel_thresholds_on_validation:
         import numpy as np
 
+        from promptsec.training.calibration import calibrate_per_label_thresholds
+
         for head in ("attack_families", "attack_objectives"):
             values = validation_predictions["logits"][head]
             probabilities = 1 / (1 + np.exp(-values))
-            thresholds[head] = select_multilabel_thresholds(
-                np.asarray(validation_predictions["truth"][head]),
-                probabilities,
-                per_label=settings.per_label_thresholds,
-            )
-        thresholds["methodology"] = "validation macro-F1 optimization"
+            if settings.schema_version == "0.2" and settings.per_label_thresholds:
+                calibrated = calibrate_per_label_thresholds(
+                    np.asarray(validation_predictions["truth"][head]),
+                    probabilities,
+                    bundle.mappings[head].labels,
+                    minimum_positive_support=settings.per_label_threshold_minimum_support,
+                    minimum_negative_support=settings.per_label_threshold_minimum_support,
+                )
+                thresholds[head] = calibrated["thresholds"]
+                thresholds[f"{head}_provenance"] = calibrated
+            else:
+                thresholds[head] = select_multilabel_thresholds(
+                    np.asarray(validation_predictions["truth"][head]),
+                    probabilities,
+                    per_label=settings.per_label_thresholds,
+                )
+        thresholds["methodology"] = "validation-only deterministic F1 calibration"
+        thresholds["test_metrics_used"] = False
     metric_thresholds = {
         head: thresholds[head] for head in ("attack_families", "attack_objectives")
     }
+    verdict_calibration: dict[str, Any] = {
+        "selected_strategy": settings.verdict_decoding_strategy,
+        "selected_alpha": 1.0,
+        "selection_split": "validation",
+        "test_metrics_used": False,
+    }
+    direct_validation_metrics = metrics_from_predictions(
+        validation_predictions, bundle.mappings, metric_thresholds
+    )
+    if settings.schema_version == "0.2":
+        import copy
+
+        import numpy as np
+
+        from promptsec.training.verdict import (
+            VALIDATION_CALIBRATED_HYBRID,
+            decode_verdict_probabilities,
+            select_hybrid_alpha,
+        )
+
+        def verdict_probabilities(raw: dict[str, Any], strategy: str, alpha: float) -> Any:
+            tensors = {
+                head: torch.as_tensor(values, dtype=torch.float32)
+                for head, values in raw["logits"].items()
+            }
+            return decode_verdict_probabilities(
+                tensors,
+                bundle.mappings,
+                strategy=strategy,
+                alpha=alpha,
+            )
+
+        direct_derived = verdict_probabilities(
+            validation_predictions, VALIDATION_CALIBRATED_HYBRID, 0.5
+        )
+        if settings.calibrate_hybrid_alpha_on_validation:
+            verdict_calibration = select_hybrid_alpha(
+                validation_predictions["truth"]["prompt_injection_verdict"],
+                direct_derived["direct"].numpy(),
+                direct_derived["derived"].numpy(),
+                [item["category"] for item in validation_predictions["metadata"]],
+                bundle.mappings["prompt_injection_verdict"].labels,
+                alpha_grid=settings.hybrid_alpha_grid,
+                false_positive_penalty=settings.hybrid_false_positive_penalty,
+            )
+            verdict_calibration["selected_strategy"] = settings.verdict_decoding_strategy
+        selected_alpha = float(verdict_calibration.get("selected_alpha", 1.0))
+        final = verdict_probabilities(
+            validation_predictions,
+            settings.verdict_decoding_strategy,
+            selected_alpha,
+        )["final"].numpy()
+        validation_predictions = copy.deepcopy(validation_predictions)
+        validation_predictions["logits"]["prompt_injection_verdict"] = np.log(
+            np.clip(final, 1e-12, 1.0)
+        )
     validation_metrics = metrics_from_predictions(
         validation_predictions, bundle.mappings, metric_thresholds
     )
+    validation_metrics["direct_head_secondary"] = direct_validation_metrics[
+        "prompt_injection_verdict"
+    ]
     validation_metrics["stratified"] = {
         field: stratified_metrics(validation_predictions, bundle.mappings, metric_thresholds, field)
         for field in ("language", "domain", "category")
@@ -415,12 +592,32 @@ def main(argv: list[str] | None = None) -> int:
     test_metrics: dict[str, Any] = {}
     raw_predictions: dict[str, Any] = {"validation": validation_predictions}
     datasets: dict[str, Any] = {"validation": validation_dataset}
-    if not args.smoke_test and settings.training_mode != FINAL_SILVER_MODEL:
+    if not args.smoke_test and settings.training_mode not in final_modes:
         for split in EVALUATION_SPLITS[1:]:
             raw, dataset = predict_split(split)
+            if settings.schema_version == "0.2":
+                import copy
+
+                import numpy as np
+
+                direct_raw = copy.deepcopy(raw)
+                final = verdict_probabilities(
+                    raw,
+                    settings.verdict_decoding_strategy,
+                    float(verdict_calibration.get("selected_alpha", 1.0)),
+                )["final"].numpy()
+                raw = copy.deepcopy(raw)
+                raw["logits"]["prompt_injection_verdict"] = np.log(np.clip(final, 1e-12, 1.0))
+                direct_predictions_by_split[split] = direct_raw
+            else:
+                direct_predictions_by_split[split] = raw
             raw_predictions[split] = raw
             datasets[split] = dataset
             metrics = metrics_from_predictions(raw, bundle.mappings, metric_thresholds)
+            if settings.schema_version == "0.2":
+                metrics["direct_head_secondary"] = metrics_from_predictions(
+                    direct_raw, bundle.mappings, metric_thresholds
+                )["prompt_injection_verdict"]
             metrics["stratified"] = {
                 field: stratified_metrics(raw, bundle.mappings, metric_thresholds, field)
                 for field in ("language", "domain", "category")
@@ -458,6 +655,18 @@ def main(argv: list[str] | None = None) -> int:
         split: summarize_truncation([dataset[index]["truncation"] for index in range(len(dataset))])
         for split, dataset in datasets.items()
     }
+    logical_consistency = {
+        split: logical_consistency_results(
+            (
+                bundle.records_by_split[split][
+                    : args.max_validation_records if args.smoke_test else None
+                ]
+            ),
+            raw,
+            bundle.mappings,
+        )
+        for split, raw in direct_predictions_by_split.items()
+    }
     training_config = settings.as_dict()
     training_config["resolved_batch_strategy"] = resolved_strategy
     training_config["special_tokens"] = list(SPECIAL_TOKENS)
@@ -472,6 +681,9 @@ def main(argv: list[str] | None = None) -> int:
         "peak_gpu_memory_bytes": training_result.get("peak_gpu_memory_bytes"),
         "resolved_batch_strategy": resolved_strategy,
         "oom_events": oom_events,
+        "checkpoint_storage_bytes_before_retention": checkpoint_inventory(args.output).get(
+            "total_complete_size_bytes", 0
+        ),
     }
     run_manifest.update(
         {
@@ -493,7 +705,23 @@ def main(argv: list[str] | None = None) -> int:
         "validation_metrics": validation_metrics,
         "test_metrics": test_metrics,
         "thresholds": thresholds,
+        "verdict_decoding": verdict_calibration,
         "counterfactual_results": counterfactual,
+        "logical_consistency_results": logical_consistency,
+        "training_pair_audit": pair_audit,
+        "sampling_report": training_result.get("sampling_report", {}),
+        "counterfactual_loss_report": {
+            "enabled": settings.counterfactual_loss_weight > 0,
+            "weight": settings.counterfactual_loss_weight,
+            "per_epoch": [
+                item.get("training_head_losses", {}) for item in training_result.get("history", [])
+            ],
+        },
+        "verdict_consistency_report": {
+            "enabled": settings.verdict_consistency_loss_weight > 0,
+            "weight": settings.verdict_consistency_loss_weight,
+            "canonical_authority_labels": ["OUTSIDE_AUTHORITY", "SPOOFED"],
+        },
         "lexical_baseline_comparison": lexical_comparison,
         "hard_negative_results": hard_negative,
         "language_results": language,
@@ -519,6 +747,11 @@ def main(argv: list[str] | None = None) -> int:
                 "heads": mapping_data,
             },
             "classification_thresholds": thresholds,
+            "verdict_decoding_configuration": verdict_calibration,
+            "class_weights": {
+                "single_label": trainer.class_weights,
+                "multilabel_pos_weight": trainer.positive_weights,
+            },
             "preprocessing_configuration": {
                 "max_length": settings.max_length,
                 "head_tail_ratio": settings.head_tail_ratio,
@@ -539,6 +772,53 @@ def main(argv: list[str] | None = None) -> int:
     )
     write_completed_reports(args.reports, summary)
     write_json(args.reports / "checkpoint_inventory.json", checkpoint_inventory(args.output))
+    if settings.schema_version == "0.2":
+        if args.evaluate_only:
+            write_json(
+                args.reports / "checkpoint_pruning_manifest.json",
+                {"status": "NOT_APPLICABLE_EVALUATE_ONLY", "reclaimed_bytes": 0},
+            )
+        else:
+            from promptsec.training.retention import (
+                apply_checkpoint_retention,
+                plan_checkpoint_retention,
+            )
+
+            plan = plan_checkpoint_retention(
+                args.output,
+                best_checkpoint=best_checkpoint,
+                keep_last_n_complete=settings.keep_last_n_complete_checkpoints,
+                compatibility=trainer.compatibility,
+                run_kind=trainer.run_kind,
+            )
+            apply_checkpoint_retention(
+                plan,
+                verified_best_export=args.output / "best_model",
+                dry_run=(
+                    settings.checkpoint_pruning_dry_run
+                    or not settings.prune_after_verified_best_export
+                ),
+                manifest_path=args.reports / "checkpoint_pruning_manifest.json",
+            )
+            write_json(
+                args.reports / "checkpoint_inventory.json",
+                checkpoint_inventory(args.output),
+            )
+        if not args.smoke_test:
+            write_cross_version_comparison(
+                args.reports.parent / "xlmr-base-multitask-v0.2-comparison",
+                v01_audit=v01_audit,
+                v02_summary={
+                    "experiment_name": settings.experiment_name,
+                    "validation_metrics": validation_metrics,
+                    "test_metrics": test_metrics,
+                    "counterfactual_results": counterfactual,
+                    "hard_negative_results": hard_negative,
+                    "language_results": language,
+                    "resource_usage": resource_usage,
+                    "checkpoint_inventory": checkpoint_inventory(args.output),
+                },
+            )
     print(json.dumps(run_manifest, indent=2, sort_keys=True))
     return 0
 

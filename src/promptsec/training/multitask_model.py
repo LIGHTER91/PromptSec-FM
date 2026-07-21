@@ -74,6 +74,7 @@ class PromptSecMultitaskModel(PreTrainedModel):
         self.class_weights: dict[str, torch.Tensor] = {}
         self.positive_weights: dict[str, torch.Tensor] = {}
         self.head_weights: dict[str, float] = {}
+        self.loss_options: dict[str, Any] = {}
         self.post_init()
 
     @classmethod
@@ -102,10 +103,12 @@ class PromptSecMultitaskModel(PreTrainedModel):
         class_weights: dict[str, torch.Tensor],
         positive_weights: dict[str, torch.Tensor],
         head_weights: dict[str, float],
+        **loss_options: Any,
     ) -> None:
         self.class_weights = class_weights
         self.positive_weights = positive_weights
         self.head_weights = head_weights
+        self.loss_options = dict(loss_options)
 
     def forward(
         self,
@@ -129,6 +132,7 @@ class PromptSecMultitaskModel(PreTrainedModel):
             class_weights=self.class_weights,
             positive_weights=self.positive_weights,
             head_weights=self.head_weights,
+            **self.loss_options,
         )
         return PromptSecMultitaskOutput(loss=total, head_losses=head_losses, logits=logits)
 

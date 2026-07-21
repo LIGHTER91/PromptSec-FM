@@ -100,6 +100,15 @@ def encode_with_section_budget(
     if capacity < sum(bool(values) for values in tokenized.values()):
         raise ValueError("max_length cannot preserve all non-empty sections and markers")
     lengths = {name: len(values) for name, values in tokenized.items()}
+    unknown_token_id = getattr(tokenizer, "unk_token_id", None)
+    unknown_counts = {
+        name: (
+            sum(token == unknown_token_id for token in values)
+            if unknown_token_id is not None
+            else None
+        )
+        for name, values in tokenized.items()
+    }
     budgets = _initial_budgets(capacity, lengths)
     allocated = {name: min(lengths[name], budgets[name]) for name in SECTION_ORDER}
     unused = capacity - sum(allocated.values())
@@ -131,6 +140,7 @@ def encode_with_section_budget(
             "max_length": max_length,
             "encoded_length": len(input_ids),
             "original_token_lengths": lengths,
+            "unknown_token_counts": unknown_counts,
             "allocated_content_tokens": allocated,
             "truncated_sections": truncated,
             "record_truncated": any(truncated.values()),

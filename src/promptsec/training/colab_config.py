@@ -16,10 +16,45 @@ import yaml
 
 SCIENTIFIC_EVALUATION = "SCIENTIFIC_EVALUATION"
 FINAL_SILVER_MODEL = "FINAL_SILVER_MODEL"
+BILINGUAL_FINAL_SILVER_MODEL = "BILINGUAL_FINAL_SILVER_MODEL"
+
+_V01_FIELDS = (
+    "model_name",
+    "training_mode",
+    "max_length",
+    "epochs",
+    "learning_rate",
+    "weight_decay",
+    "warmup_ratio",
+    "dropout",
+    "max_grad_norm",
+    "early_stopping_patience",
+    "seed",
+    "per_device_batch_size",
+    "gradient_accumulation_steps",
+    "effective_batch_size",
+    "save_steps",
+    "num_workers",
+    "gradient_checkpointing",
+    "global_multilabel_threshold",
+    "per_label_thresholds",
+    "optimize_multilabel_thresholds_on_validation",
+    "head_tail_ratio",
+    "minimum_single_class_weight",
+    "maximum_single_class_weight",
+    "minimum_pos_weight",
+    "maximum_pos_weight",
+    "head_weights",
+    "final_silver_splits",
+    "allow_cpu_smoke_test",
+    "retry_cuda_oom_once",
+    "hub_export_enabled",
+)
 
 
 @dataclass(slots=True)
 class TrainingSettings:
+    schema_version: str = "0.1"
     model_name: str = "FacebookAI/xlm-roberta-base"
     training_mode: str = SCIENTIFIC_EVALUATION
     max_length: int = 512
@@ -50,12 +85,49 @@ class TrainingSettings:
     allow_cpu_smoke_test: bool = True
     retry_cuda_oom_once: bool = True
     hub_export_enabled: bool = False
+    experiment_name: str = "v0.1"
+    use_category_balancing: bool = False
+    maximum_category_oversampling_multiplier: float = 3.0
+    use_pair_aware_sampler: bool = False
+    counterfactual_batch_fraction: float = 0.50
+    counterfactual_loss_weight: float = 0.0
+    invariant_loss_weight: float = 1.0
+    expected_change_loss_weight: float = 1.0
+    counterfactual_margin: float = 0.10
+    verdict_consistency_loss_weight: float = 0.0
+    verdict_decoding_strategy: str = "DIRECT_HEAD"
+    calibrate_hybrid_alpha_on_validation: bool = False
+    hybrid_alpha_grid: list[float] = field(default_factory=lambda: [0.0, 0.25, 0.5, 0.75, 1.0])
+    hybrid_false_positive_penalty: float = 0.25
+    validation_selection_metric: str = "ORIGINAL_CORE_MACRO_F1"
+    single_label_loss_mode: str = "WEIGHTED_CROSS_ENTROPY"
+    focal_gamma: float = 2.0
+    multilabel_loss_mode: str = "WEIGHTED_BCE"
+    gamma_positive: float = 1.0
+    gamma_negative: float = 4.0
+    probability_clip: float = 0.05
+    per_label_threshold_minimum_support: int = 2
+    keep_best_checkpoint: bool = True
+    keep_last_n_complete_checkpoints: int = 2
+    prune_after_verified_best_export: bool = True
+    checkpoint_pruning_dry_run: bool = True
+    require_source_commit_match: bool = False
+    v0_1_report_root: str | None = None
 
     def validate(self) -> None:
-        if self.training_mode not in {SCIENTIFIC_EVALUATION, FINAL_SILVER_MODEL}:
+        if self.schema_version not in {"0.1", "0.2"}:
+            raise ValueError("training config schema_version must be '0.1' or '0.2'")
+        if self.training_mode not in {
+            SCIENTIFIC_EVALUATION,
+            FINAL_SILVER_MODEL,
+            BILINGUAL_FINAL_SILVER_MODEL,
+        }:
             raise ValueError(f"unknown training mode: {self.training_mode}")
-        if self.training_mode == FINAL_SILVER_MODEL and not self.final_silver_splits:
-            raise ValueError("FINAL_SILVER_MODEL requires explicit final_silver_splits")
+        if (
+            self.training_mode in {FINAL_SILVER_MODEL, BILINGUAL_FINAL_SILVER_MODEL}
+            and not self.final_silver_splits
+        ):
+            raise ValueError(f"{self.training_mode} requires explicit final_silver_splits")
         if self.max_length < 32 or self.epochs < 1 or self.seed < 0:
             raise ValueError("invalid max_length, epochs, or seed")
         if self.learning_rate <= 0 or self.weight_decay < 0 or not 0 <= self.warmup_ratio < 1:
@@ -72,9 +144,43 @@ class TrainingSettings:
             raise ValueError("global_multilabel_threshold must be within (0, 1)")
         if self.hub_export_enabled:
             raise ValueError("automatic Hugging Face Hub export is forbidden")
+        if not 0 <= self.counterfactual_batch_fraction <= 1:
+            raise ValueError("counterfactual_batch_fraction must be within [0, 1]")
+        if self.maximum_category_oversampling_multiplier < 1:
+            raise ValueError("maximum_category_oversampling_multiplier must be at least 1")
+        if (
+            min(
+                self.counterfactual_loss_weight,
+                self.invariant_loss_weight,
+                self.expected_change_loss_weight,
+                self.verdict_consistency_loss_weight,
+                self.counterfactual_margin,
+            )
+            < 0
+        ):
+            raise ValueError("v0.2 auxiliary loss settings must be non-negative")
+        if self.single_label_loss_mode not in {"WEIGHTED_CROSS_ENTROPY", "FOCAL_CROSS_ENTROPY"}:
+            raise ValueError("unknown single_label_loss_mode")
+        if self.multilabel_loss_mode not in {"WEIGHTED_BCE", "ASYMMETRIC_FOCAL_BCE"}:
+            raise ValueError("unknown multilabel_loss_mode")
+        if self.verdict_decoding_strategy not in {
+            "DIRECT_HEAD",
+            "DERIVED_FROM_COMPONENT_HEADS",
+            "VALIDATION_CALIBRATED_HYBRID",
+        }:
+            raise ValueError("unknown verdict_decoding_strategy")
+        if self.use_category_balancing and self.single_label_loss_mode == "FOCAL_CROSS_ENTROPY":
+            if (
+                self.maximum_single_class_weight > 5
+                or self.maximum_category_oversampling_multiplier > 3
+            ):
+                raise ValueError("unsafe combination of focal CE, class weights, and oversampling")
 
     def as_dict(self) -> dict[str, Any]:
-        return asdict(self)
+        values = asdict(self)
+        if self.schema_version == "0.1":
+            return {name: values[name] for name in _V01_FIELDS}
+        return values
 
     def fingerprint(self) -> str:
         encoded = json.dumps(self.as_dict(), sort_keys=True, separators=(",", ":")).encode()
@@ -86,11 +192,9 @@ def load_training_config(path: str | Path) -> TrainingSettings:
         value = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
     except (OSError, UnicodeError, yaml.YAMLError) as error:
         raise ValueError(f"cannot load training config {path}: {error}") from error
-    if not isinstance(value, dict) or value.get("schema_version") != "0.1":
-        raise ValueError("training config schema_version must be '0.1'")
-    settings = TrainingSettings(
-        **{key: item for key, item in value.items() if key != "schema_version"}
-    )
+    if not isinstance(value, dict) or value.get("schema_version") not in {"0.1", "0.2"}:
+        raise ValueError("training config schema_version must be '0.1' or '0.2'")
+    settings = TrainingSettings(**value)
     settings.validate()
     return settings
 

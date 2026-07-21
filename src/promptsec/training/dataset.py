@@ -283,6 +283,8 @@ class PolicyBenchTorchDataset:
                 head_tail_ratio=self.head_tail_ratio,
             )
             extension = record["extensions"]["policybench_v0_1"]
+            counterfactual = extension.get("counterfactual")
+            counterfactual = counterfactual if isinstance(counterfactual, Mapping) else {}
             self._cache[index] = {
                 "input_ids": encoded.input_ids,
                 "attention_mask": encoded.attention_mask,
@@ -292,6 +294,11 @@ class PolicyBenchTorchDataset:
                     "language": record["content"]["language"],
                     "domain": extension["blueprint"]["domain"],
                     "category": extension["blueprint"]["category"],
+                    "counterfactual_group_id": counterfactual.get("counterfactual_group_id"),
+                    "counterfactual_type": counterfactual.get("counterfactual_type"),
+                    "expected_label_changes": list(
+                        counterfactual.get("expected_label_changes", [])
+                    ),
                 },
                 "truncation": encoded.statistics,
             }
@@ -357,5 +364,22 @@ def summarize_truncation(items: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
             "p95": percentile(0.95),
             "p99": percentile(0.99),
             "max": lengths[-1],
+        },
+        "unknown_token_statistics": {
+            section: {
+                "unknown_tokens": sum(
+                    int(item.get("unknown_token_counts", {}).get(section) or 0) for item in items
+                ),
+                "original_tokens": sum(
+                    int(item["original_token_lengths"][section]) for item in items
+                ),
+            }
+            for section in (
+                "protected_policy",
+                "user_goal",
+                "source",
+                "available_capabilities",
+                "candidate",
+            )
         },
     }
