@@ -129,6 +129,9 @@ def test_notebook_is_valid_deterministic_and_full_training_disabled(tmp_path) ->
     assert "expected_source_text = str(expected_source)" in source
     assert "sys.path.insert(0, expected_source_text)" in source
     assert "importlib.invalidate_caches()" in source
+    assert '["git", "fetch", "--depth", "1", "origin", REPOSITORY_REF]' in source
+    assert '["git", "checkout", "--detach", "FETCH_HEAD"]' in source
+    assert "Le clone Colab contient des modifications suivies" in source
     assert source.index("sys.path.insert(0, expected_source_text)") < source.index(
         'importlib.import_module("promptsec.training.dataset")'
     )

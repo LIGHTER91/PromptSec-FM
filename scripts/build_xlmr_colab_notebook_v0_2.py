@@ -61,9 +61,28 @@ PRUNE_CHECKPOINTS = False"""
             """import subprocess
 from pathlib import Path
 
-if not Path(REPO_DIR).exists():
+repo_path = Path(REPO_DIR)
+if not repo_path.exists():
     subprocess.run(
         ["git", "clone", "--branch", REPOSITORY_REF, REPOSITORY_URL, REPO_DIR],
+        check=True,
+    )
+else:
+    if not (repo_path / ".git").is_dir():
+        raise RuntimeError(f"Le chemin existe mais n'est pas un clone Git: {repo_path}")
+    for diff_command in (["git", "diff", "--quiet"], ["git", "diff", "--cached", "--quiet"]):
+        if subprocess.run(diff_command, cwd=REPO_DIR, check=False).returncode:
+            raise RuntimeError(
+                "Le clone Colab contient des modifications suivies; utilisez un runtime propre."
+            )
+    subprocess.run(
+        ["git", "fetch", "--depth", "1", "origin", REPOSITORY_REF],
+        cwd=REPO_DIR,
+        check=True,
+    )
+    subprocess.run(
+        ["git", "checkout", "--detach", "FETCH_HEAD"],
+        cwd=REPO_DIR,
         check=True,
     )
 commit = subprocess.run(

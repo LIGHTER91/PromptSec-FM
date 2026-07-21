@@ -76,3 +76,16 @@ def test_nine_head_forward_loss_backward_and_decode(label_mappings, record_facto
     assert any(parameter.grad is not None for parameter in model.parameters())
     decoded = model.decode_predictions(output.logits)
     assert set(decoded) == set(label_mappings)
+
+
+def test_resized_encoder_vocabulary_round_trips(tmp_path, label_mappings) -> None:
+    model = _tiny_model(label_mappings)
+    original_size = model.encoder.get_input_embeddings().num_embeddings
+    resized_size = original_size + len(SPECIAL_TOKENS)
+
+    model.resize_encoder_token_embeddings(resized_size)
+
+    assert model.config.encoder_config["vocab_size"] == resized_size
+    model.save_pretrained(tmp_path, safe_serialization=True)
+    reloaded = PromptSecMultitaskModel.from_pretrained(tmp_path, local_files_only=True)
+    assert reloaded.encoder.get_input_embeddings().num_embeddings == resized_size

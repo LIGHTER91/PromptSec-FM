@@ -137,7 +137,12 @@ class PromptSecMultitaskModel(PreTrainedModel):
         return PromptSecMultitaskOutput(loss=total, head_losses=head_losses, logits=logits)
 
     def resize_encoder_token_embeddings(self, size: int) -> Any:
-        return self.encoder.resize_token_embeddings(size)
+        resized = self.encoder.resize_token_embeddings(size)
+        # The outer PromptSec config is what ``save_pretrained`` serializes.
+        # Keep its nested encoder config aligned with the resized module so a
+        # local reload constructs the embedding matrix at the saved size.
+        self.config.encoder_config = self.encoder.config.to_dict()
+        return resized
 
     def decode_predictions(
         self,
