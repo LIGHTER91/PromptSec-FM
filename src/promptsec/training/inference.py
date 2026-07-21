@@ -43,7 +43,13 @@ class PromptSecPredictor:
         encoded = encode_with_section_budget(
             self.tokenizer,
             record_sections(context_record),
-            max_length=int(getattr(self.model.config, "max_length", 512)),
+            max_length=int(
+                getattr(
+                    self.model.config,
+                    "promptsec_max_length",
+                    getattr(self.model.config, "max_length", 512),
+                )
+            ),
         )
         with torch.inference_mode():
             output = self.model(

@@ -38,6 +38,8 @@ def build_notebook() -> object:
 REPOSITORY_REF = "main"
 REPO_DIR = "/content/PromptSec-FM"
 DRIVE_ROOT = "/content/drive/MyDrive/PromptSec-FM"
+SMOKE_CHECKPOINT_ROOT = "/content/promptsec_smoke/checkpoints"
+SMOKE_REPORT_ROOT = "/content/promptsec_smoke/reports"
 DATASET_ARCHIVE = f"{DRIVE_ROOT}/data/policybench-codex-v0.1-colab.zip"
 DATASET_DIR = "/content/promptsec_data/policybench-codex-v0.1"
 V0_1_REPORT_ROOT = f"{DRIVE_ROOT}/reports/xlmr-base-multitask-v0.1"
@@ -83,10 +85,18 @@ subprocess.run(
     cwd=REPO_DIR,
     check=True,
 )
-load_training_dataset = importlib.import_module(
-    "promptsec.training.dataset"
-).load_training_dataset
-print("Import PromptSec OK")"""
+expected_source = (Path(REPO_DIR) / "src").resolve()
+expected_source_text = str(expected_source)
+if expected_source_text not in sys.path:
+    sys.path.insert(0, expected_source_text)
+importlib.invalidate_caches()
+
+training_module = importlib.import_module("promptsec.training.dataset")
+training_path = Path(training_module.__file__).resolve()
+if expected_source not in training_path.parents:
+    raise RuntimeError(f"Import PromptSec inattendu: {training_path}")
+load_training_dataset = training_module.load_training_dataset
+print("Import PromptSec vérifié depuis:", training_path)"""
         ),
         markdown("5. Vérification de l’archive", "Le SHA-256 et le manifeste Colab sont vérifiés."),
         code(
@@ -152,13 +162,36 @@ print(training_audit["heads"])"""
             """CONFIG = "configs/xlmr_multitask_colab_v0.2.yaml"
 def run_command(command):
     print("Commande:", command)
-    subprocess.run(command, cwd=REPO_DIR, check=True, shell=False)
+    process = subprocess.Popen(
+        command,
+        cwd=REPO_DIR,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        bufsize=1,
+        shell=False,
+    )
+    output_tail = []
+    assert process.stdout is not None
+    for line in process.stdout:
+        print(line, end="")
+        output_tail.append(line.rstrip())
+        output_tail = output_tail[-80:]
+    return_code = process.wait()
+    if return_code:
+        tail = "\\n".join(output_tail)
+        raise RuntimeError(
+            f"Commande échouée avec le code {return_code}.\\n"
+            f"Dernières lignes du processus:\\n{tail}"
+        )
 
-def experiment_command(name, *, resume=True):
+def experiment_command(name, *, resume=True, smoke=False):
+    checkpoint_root = SMOKE_CHECKPOINT_ROOT if smoke else f"{DRIVE_ROOT}/checkpoints"
+    report_root = SMOKE_REPORT_ROOT if smoke else f"{DRIVE_ROOT}/reports"
     command = [sys.executable, "scripts/train_xlmr_multitask.py", "--config", CONFIG,
             "--dataset", DATASET_DIR,
-            "--output", f"{DRIVE_ROOT}/checkpoints/xlmr-base-multitask-v0.2-{name}",
-            "--reports", f"{DRIVE_ROOT}/reports/xlmr-base-multitask-v0.2-{name}",
+            "--output", f"{checkpoint_root}/xlmr-base-multitask-v0.2-{name}",
+            "--reports", f"{report_root}/xlmr-base-multitask-v0.2-{name}",
             "--experiment", name, "--v0-1-report-root", V0_1_REPORT_ROOT,
             "--resume" if resume else "--no-resume"]
     if PRUNE_CHECKPOINTS:
@@ -168,7 +201,9 @@ def experiment_command(name, *, resume=True):
         markdown("11. Smoke propre Experiment B", "Par défaut il démarre propre et sans reprise."),
         code(
             """if RUN_SMOKE_TEST_FIRST:
-    smoke = experiment_command("relational", resume=RESUME_SMOKE_TEST)
+    smoke = experiment_command(
+        "relational", resume=RESUME_SMOKE_TEST, smoke=True
+    )
     smoke += ["--smoke-test", "--max-train-records", "32", "--max-validation-records", "16",
               "--epochs", "1", "--max-length", "128"]
     if RESET_SMOKE_TEST:
@@ -258,7 +293,7 @@ print("Le CLI écrit checkpoint_pruning_manifest.json après vérification de l�
         code(
             """print(
     "Smoke:",
-    experiment_command("relational", resume=False)
+    experiment_command("relational", resume=False, smoke=True)
     + ["--smoke-test", "--reset-smoke-test"],
 )
 print("A:", experiment_command("balanced", resume=True))

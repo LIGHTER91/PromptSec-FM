@@ -47,6 +47,8 @@ def test_cli_smoke_resume_default_is_no_resume_for_v02() -> None:
     script = (ROOT / "scripts" / "train_xlmr_multitask.py").read_text(encoding="utf-8")
     assert 'args.resume = not (args.smoke_test and settings.schema_version == "0.2")' in script
     assert '"--reset-smoke-test",\n        action=argparse.BooleanOptionalAction' in script
+    assert "save_steps=0" in script
+    assert "model.config.promptsec_max_length = settings.max_length" in script
 
 
 def test_smoke_reset_is_bounded_to_v02(tmp_path) -> None:
@@ -118,6 +120,18 @@ def test_notebook_is_valid_deterministic_and_full_training_disabled(tmp_path) ->
     assert "RUN_FOCAL_EXPERIMENT = False" in source
     assert "BILINGUAL_FINAL_SILVER_MODEL = False" in source
     assert "--reset-smoke-test" in source and "--no-resume" in source
+    assert 'SMOKE_CHECKPOINT_ROOT = "/content/promptsec_smoke/checkpoints"' in source
+    assert 'SMOKE_REPORT_ROOT = "/content/promptsec_smoke/reports"' in source
+    assert "resume=RESUME_SMOKE_TEST, smoke=True" in source
+    assert "subprocess.Popen(" in source
+    assert "stderr=subprocess.STDOUT" in source
+    assert "Dernières lignes du processus" in source
+    assert "expected_source_text = str(expected_source)" in source
+    assert "sys.path.insert(0, expected_source_text)" in source
+    assert "importlib.invalidate_caches()" in source
+    assert source.index("sys.path.insert(0, expected_source_text)") < source.index(
+        'importlib.import_module("promptsec.training.dataset")'
+    )
     assert len([cell for cell in notebook.cells if cell.cell_type == "markdown"]) >= 21
 
 

@@ -62,10 +62,11 @@ label sans support positif/négatif suffisant reprend 0,5, et un seuil prédisan
 
 ## Smoke et checkpoints
 
-Le smoke écrit uniquement sous le sous-répertoire v0.2 `smoke-test`, démarre avec `--no-resume`
-et `--reset-smoke-test`, et inclut le commit source dans la compatibilité. Une reprise issue d’un
-autre commit, dataset, mapping, modèle, expérience ou configuration échoue. Le run complet utilise
-`--resume`.
+Le smoke écrit uniquement sous `/content/promptsec_smoke/.../v0.2.../smoke-test`, démarre avec
+`--no-resume` et `--reset-smoke-test`, et inclut le commit source dans la compatibilité. Il conserve
+seulement le checkpoint de fin d’époque : les états XLM-R/Adam intermédiaires ne remplissent pas
+Drive. Une reprise issue d’un autre commit, dataset, mapping, modèle, expérience ou configuration
+échoue. Le run complet utilise `--resume` et reste sur Drive.
 
 La rétention conserve le meilleur checkpoint et les deux derniers checkpoints complets. Avant
 toute suppression, `best_model`, ses checksums, son tokenizer et ses mappings sont vérifiés. Le
@@ -77,8 +78,8 @@ mode par défaut est dry-run et écrit `checkpoint_pruning_manifest.json`. Tout 
 # Smoke relationnel propre
 python scripts/train_xlmr_multitask.py --config configs/xlmr_multitask_colab_v0.2.yaml \
   --dataset /content/promptsec_data/policybench-codex-v0.1 \
-  --output /content/drive/MyDrive/PromptSec-FM/checkpoints/xlmr-base-multitask-v0.2-relational \
-  --reports /content/drive/MyDrive/PromptSec-FM/reports/xlmr-base-multitask-v0.2-relational \
+  --output /content/promptsec_smoke/checkpoints/xlmr-base-multitask-v0.2-relational \
+  --reports /content/promptsec_smoke/reports/xlmr-base-multitask-v0.2-relational \
   --experiment relational --smoke-test --reset-smoke-test --no-resume \
   --max-train-records 32 --max-validation-records 16 --epochs 1 --max-length 128
 

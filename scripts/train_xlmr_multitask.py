@@ -289,7 +289,9 @@ def main(argv: list[str] | None = None) -> int:
             settings,
             epochs=args.epochs or 1,
             max_length=args.max_length or 128,
-            save_steps=1,
+            # The epoch checkpoint is enough for the resume probe. A checkpoint
+            # per optimizer step would duplicate several GiB of state on Drive.
+            save_steps=0,
         )
         args.max_train_records = args.max_train_records or 32
         args.max_validation_records = args.max_validation_records or 16
@@ -395,7 +397,10 @@ def main(argv: list[str] | None = None) -> int:
         model.resize_encoder_token_embeddings(len(tokenizer))
     else:
         model = PromptSecMultitaskModel.from_pretrained(model_source)
-    model.config.max_length = settings.max_length
+    if settings.schema_version == "0.1":
+        model.config.max_length = settings.max_length
+    else:
+        model.config.promptsec_max_length = settings.max_length
     parameter_count = sum(parameter.numel() for parameter in model.parameters())
     trainer = MultitaskTrainer(
         model=model,
